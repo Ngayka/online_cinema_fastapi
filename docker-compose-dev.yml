@@ -122,12 +122,25 @@ services:
     networks:
       - theater_network
 
+  redis:
+    image: redis:7-alpine
+    container_name: cinema-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    expose:
+      - "6379"
+    networks:
+      - theater_network
+
 volumes:
   postgres_theater_data:
     driver: local
   pgadmin_theater_data:
     driver: local
   minio_data:
+    driver: local
+  redis-data:
     driver: local
 
 networks:
