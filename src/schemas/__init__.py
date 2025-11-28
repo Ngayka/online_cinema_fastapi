@@ -17,3 +17,9 @@ from schemas.accounts import (
     TokenRefreshRequestSchema,
     TokenRefreshResponseSchema
 )
+from schemas.cart import (
+    CartReadSchema,
+    CartItemReadSchema,
+    CartItemCreateSchema,
+    MovieInCartReadSchema
+)

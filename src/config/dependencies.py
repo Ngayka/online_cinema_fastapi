@@ -3,10 +3,12 @@ import os
 from fastapi import Depends
 
 from config.settings import TestingSettings, Settings, BaseAppSettings
+
 from notifications import EmailSenderInterface, EmailSender
 from security.interfaces import JWTAuthManagerInterface
 from security.token_manager import JWTAuthManager
 from storages import S3StorageInterface, S3StorageClient
+
 
 
 def get_settings() -> BaseAppSettings:
@@ -103,3 +105,5 @@ def get_s3_storage_client(
         secret_key=settings.S3_STORAGE_SECRET_KEY,
         bucket_name=settings.S3_BUCKET_NAME
     )
+
+
