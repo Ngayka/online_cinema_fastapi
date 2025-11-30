@@ -23,3 +23,8 @@ from schemas.cart import (
     CartItemCreateSchema,
     MovieInCartReadSchema
 )
+from schemas.orders import (
+    OrderCreateSchema,
+    OrderDetailSchema,
+    OrderListSchema
+)
