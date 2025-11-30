@@ -125,6 +125,7 @@ class MovieModel(Base):
 
     country_id: Mapped[int] = mapped_column(ForeignKey("countries.id"), nullable=False)
     country: Mapped["CountryModel"] = relationship("CountryModel", back_populates="movies")
+    order_items: Mapped[list["OrderItem"]] = relationship(back_populates="order_items")
 
     genres: Mapped[list["GenreModel"]] = relationship(
         "GenreModel",
