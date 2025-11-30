@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -8,19 +8,20 @@ from config import get_settings
 from config.dependencies_auth import get_current_user
 from database import UserModel, get_db, Cart, CartItem
 from schemas import OrderCreateSchema
+from validation.orders import get_purchased_movie_ids, is_movie_available
 
 router = APIRouter()
 app_settings = get_settings()
 
 
 @router.post(
-    "/orders/",
+    "/orders",
     response_model=OrderCreateSchema,
     summary="Add movie to order",
     status_code=status.HTTP_201_CREATED,
     responses={
         201: {"description": "Movie added successfully"},
-        400: {"description": "Movie already in cart"},
+        400: {"description": "Cart is empty"},
         404: {"description": "Movie not found"}
     }
 )
@@ -29,6 +30,25 @@ async def create_order(
         db: AsyncSession = Depends(get_db)
 ):
     cart = await db.execute(select(Cart).where(Cart.user_id == user.id)
-                            .options(selectinload(Cart.item)
+                            .options(selectinload(Cart.items)
                                      .selectinload(CartItem.movie)))
     cart = cart.scalar_one_or_none()
+    if not cart or not cart.items:
+        raise HTTPException(status_code=400, detail="Cart is empty")
+
+    purchased_movies = await get_purchased_movie_ids(db, user.id)
+    available_cart_items = [
+        item for item in cart.items if item.movie_id not in purchased_movies
+    ]
+
+    if not available_cart_items:
+        raise HTTPException(
+            status_code=400, detail="All movies in cart are already purchased"
+        )
+    unavailable_movies = [
+        item.movie.name for item in available_cart_items if not is_movie_available(item.movie)
+    ]
+    if unavailable_movies:
+        raise HTTPException(
+            status_code=400, detail=f"Movies not available:','join.{unavailable_movies}"
+        )

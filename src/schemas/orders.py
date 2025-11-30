@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from schemas import MovieInCartReadSchema
 
-from database.models.orders import StatusEnum
+from database.models.orders import OrderStatusEnum
 
 
 class OrderCreateSchema(BaseModel):
@@ -18,7 +18,11 @@ class OrderDetailSchema(BaseModel):
     created_at: datetime
     order_item: list[OrderCreateSchema]
     total_amount: Decimal
-    status: StatusEnum
+    status: OrderStatusEnum
+
+    @classmethod
+    def total_amount(cls, order: OrderCreateSchema):
+        return sum(order.price_at_order)
 
     class Config:
         from_attributes = True
@@ -28,7 +32,7 @@ class OrderListSchema(BaseModel):
     id: int
     created_at: datetime
     total_amount: Decimal
-    status: StatusEnum
+    status: OrderStatusEnum
 
     class Config:
         from_attributes = True
