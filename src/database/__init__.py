@@ -23,7 +23,11 @@ from database.models.movies import (
 from database.models.cart import (
     Cart,
     CartItem,
-
+)
+from database.models.orders import (
+    Order,
+    OrderItem,
+    OrderStatusEnum
 )
 from database.session_sqlite import reset_sqlite_database as reset_database
 from database.validators import accounts as accounts_validators

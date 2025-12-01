@@ -7,8 +7,9 @@ from starlette import status
 from config import get_settings
 from config.dependencies_auth import get_current_user
 from database import UserModel, get_db, Cart, CartItem
-from schemas import OrderCreateSchema
-from validation.orders import get_purchased_movie_ids, is_movie_available
+from schemas import OrderResponseSchema
+from config import create_order_service, get_purchased_movie_ids, check_pending_orders
+from validation import is_movie_available
 
 router = APIRouter()
 app_settings = get_settings()
@@ -16,7 +17,7 @@ app_settings = get_settings()
 
 @router.post(
     "/orders",
-    response_model=OrderCreateSchema,
+    response_model=OrderResponseSchema,
     summary="Add movie to order",
     status_code=status.HTTP_201_CREATED,
     responses={
@@ -52,3 +53,14 @@ async def create_order(
         raise HTTPException(
             status_code=400, detail=f"Movies not available:','join.{unavailable_movies}"
         )
+    movie_ids = [item.movie_id for item in available_cart_items]
+    pending_duplicate = await check_pending_orders(db, user_id=user.id, movie_ids=movie_ids)
+    if pending_duplicate:
+        raise HTTPException(
+            status_code=400,
+            detail="You already have a pending order with this movie"
+        )
+    temp_cart = Cart()
+    temp_cart.items = available_cart_items
+    order = await create_order_service(db=db, cart=temp_cart, user=user)
+    return order
