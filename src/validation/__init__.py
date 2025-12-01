@@ -4,3 +4,5 @@ from validation.profile import (
     validate_gender,
     validate_birth_date
 )
+
+from validation.orders import is_movie_available

@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Optional, List
 
 from pydantic import BaseModel, Field, field_validator
@@ -102,6 +103,7 @@ class MovieDetailSchema(MovieBaseSchema):
     genres: List[GenreSchema]
     actors: List[ActorSchema]
     languages: List[LanguageSchema]
+    current_price: Decimal
 
     model_config = {
         "from_attributes": True,

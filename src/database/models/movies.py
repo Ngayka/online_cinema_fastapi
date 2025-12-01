@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 from enum import Enum
 from typing import Optional
 
@@ -115,6 +116,7 @@ class MovieModel(Base):
     date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
     score: Mapped[float] = mapped_column(Float, nullable=False)
     overview: Mapped[str] = mapped_column(Text, nullable=False)
+    current_price: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     status: Mapped[MovieStatusEnum] = mapped_column(
         SQLAlchemyEnum(MovieStatusEnum), nullable=False
