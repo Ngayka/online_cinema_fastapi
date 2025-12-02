@@ -6,8 +6,8 @@ from starlette import status
 
 from config import get_settings
 from config.dependencies_auth import get_current_user
-from database import UserModel, get_db, Cart, CartItem
-from schemas import OrderResponseSchema
+from database import UserModel, get_db, Cart, CartItem, Order, OrderItem
+from schemas import OrderResponseSchema, OrderListSchema
 from config import create_order_service, get_purchased_movie_ids, check_pending_orders
 from validation import is_movie_available
 
@@ -63,4 +63,57 @@ async def create_order(
     temp_cart = Cart()
     temp_cart.items = available_cart_items
     order = await create_order_service(db=db, cart=temp_cart, user=user)
+    return order
+
+
+@router.get(
+    "/orders/me",
+    response_model=OrderListSchema,
+    summary="Return all user`s orders",
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"description": "All orders retrieved successfully"},
+        404: {"description": "Orders not found"}
+    }
+)
+async def return_all_orders(user: UserModel = Depends(get_current_user),
+                            db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Order)
+                              .where(Order.user_id == user.id)
+                              )
+    orders = result.scalars().all()
+    if not orders:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Orders not found")
+    return orders
+
+
+@router.get(
+    "/orders/{order_id}",
+    summary="Return order detail",
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"description": "Order retrieve successfully"},
+        404: {"description": "Order not found"}
+    }
+)
+async def return_order_by_id(
+        order_id: int,
+        user: UserModel = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Order)
+                              .where(
+                                Order.user_id == user.id,
+                                Order.id == order_id
+                        )
+                        .options(
+                            selectinload(Order.order_items)
+                            .selectinload(OrderItem.movie)
+                            )
+                        )
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Order not found")
     return order
