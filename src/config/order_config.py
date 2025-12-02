@@ -59,3 +59,17 @@ async def get_purchased_movie_ids(db: AsyncSession, user_id: int) -> set[int]:
                                                                      Order.status == OrderStatusEnum.PAID))
 
     return {row[0] for row in result.all()}
+
+
+async def get_order_by_id_and_user(order_id: int, db: AsyncSession, user: UserModel):
+    result = await db.execute(select(Order)
+    .where(
+        Order.user_id == user.id,
+        Order.id == order_id
+    )
+    .options(
+        selectinload(Order.order_items)
+        .selectinload(OrderItem.movie)
+    )
+    )
+    return result or None

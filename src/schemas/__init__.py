@@ -30,3 +30,6 @@ from schemas.orders import (
     OrderResponseSchema,
     OrderItemResponseSchema
 )
+from schemas.payments import (
+    PaymentRequestSchema
+)

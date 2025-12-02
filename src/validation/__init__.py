@@ -6,3 +6,5 @@ from validation.profile import (
 )
 
 from validation.orders import is_movie_available
+
+from validation.payments import validate_payment_method
