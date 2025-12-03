@@ -187,4 +187,4 @@ async def pay_order(order_id: int,
     await validate_payment_method(payment_data)
 
     try:
-
+        payment_result = await process_payment()
