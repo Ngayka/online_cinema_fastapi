@@ -32,6 +32,7 @@ from schemas.orders import (
 )
 from schemas.payments import (
     PaymentStatusUpdateSchema,
+    PaymentRequestSchema,
     PaymentConfirmationEmailSchema,
     PaymentCreateSchema,
     PaymentDetailSchema,
