@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 from pydantic import BaseModel, field_validator
 
@@ -17,6 +17,19 @@ class PaymentCreateSchema(BaseModel):
 class StripeCreateSchema(PaymentCreateSchema):
     stripe_token: Optional[str] = None
     return_url: str
+
+
+class PaymentResultSchema(BaseModel):
+    success: bool
+    transaction_id: Optional[str] = None
+    payment_intent_id: Optional[str] = None
+    status: Optional[str] = None
+    client_secret: Optional[str] = None
+    requires_action: bool = False
+    message: str
+    error: Optional[Dict[str, Any]] = None
+    suggestion: Optional[str] = None
+    next_action: Optional[Dict[str, Any]] = None
 
 
 class PaymentResponseSchema(BaseModel):
@@ -66,7 +79,6 @@ class PaymentRequestSchema(BaseModel):
         if not self.payment_method_id and not self.card_number:
             raise ValueError("Either payment_method_id or card details are required")
         return self
-
 
 
 class PaymentListSchema(BaseModel):

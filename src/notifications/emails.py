@@ -1,6 +1,9 @@
 import logging
+from datetime import datetime
+from decimal import Decimal
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from typing import Optional, List, Dict
 
 import aiosmtplib
 from jinja2 import Environment, FileSystemLoader
@@ -23,6 +26,7 @@ class EmailSender(EmailSenderInterface):
         activation_complete_email_template_name: str,
         password_email_template_name: str,
         password_complete_email_template_name: str,
+        payment_confirmation_template_name: str
     ):
         self._hostname = hostname
         self._port = port
@@ -33,6 +37,7 @@ class EmailSender(EmailSenderInterface):
         self._activation_complete_email_template_name = activation_complete_email_template_name
         self._password_email_template_name = password_email_template_name
         self._password_complete_email_template_name = password_complete_email_template_name
+        self._payment_confirmation_email_template_name = payment_confirmation_template_name
 
         self._env = Environment(loader=FileSystemLoader(template_dir))
 
@@ -117,3 +122,37 @@ class EmailSender(EmailSenderInterface):
         html_content = template.render(email=email, login_link=login_link)
         subject = "Your Password Has Been Successfully Reset"
         await self._send_email(email, subject, html_content)
+
+    async def send_payment_confirmation_email(self,
+                                              email: str,
+                                              order_id: int,
+                                              amount: Decimal,
+                                              transaction_id: int,
+                                             ) -> None:
+        """
+        Send payment confirmation email
+
+        Args:
+            email: Recipient email address
+            order_id: Order ID
+            amount: Payment amount
+            transaction_id: Transaction/order reference
+
+        Raises:
+            BaseEmailError: If sending fails
+        """
+        try:
+
+            template= self._env.get_template(self._payment_confirmation_email_template_name)
+            html_content = template.render(email=email,
+                                           order_id=order_id,
+                                           amount=amount,
+                                           transaction_id=transaction_id,
+                                           date = datetime.now.strftime("%Y-%m-%d %H:%M"))
+            subject = f"Payment Confirmation - Order #{order_id}"
+            await self._send_email(email, subject, html_content)
+            logging.info(f"Payment confirmation email sent to {email} for order #{order_id}")
+
+        except Exception as error:
+            logging.error(f"Failed to send payment confirmation email to {email}: {error}")
+            raise BaseEmailError(f"Failed to send payment confirmation email: {error}")

@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,12 +8,26 @@ from starlette import status
 
 from config import get_settings, get_order_by_id_and_user
 from config.dependencies_auth import get_current_user
-from database import UserModel, get_db, Cart, CartItem, Order, OrderItem, OrderStatusEnum
+from notifications import EmailSenderInterface
+from database import (
+    UserModel,
+    get_db,
+    Cart,
+    CartItem,
+    Order,
+    OrderItem,
+    OrderStatusEnum,
+    PaymentItem,
+    Payment,
+    PaymentStatusEnum
+)
+
 from schemas import (OrderResponseSchema,
                      OrderListSchema,
                      OrderDetailSchema,
                      MessageResponseSchema,
                      PaymentRequestSchema)
+from services import process_payment
 from config import create_order_service, get_purchased_movie_ids, check_pending_orders
 from validation import is_movie_available, validate_payment_method
 
@@ -159,6 +175,7 @@ async def pay_order(order_id: int,
                     payment_data: PaymentRequestSchema,
                     db: AsyncSession = Depends(get_db),
                     user: UserModel = Depends(get_current_user),
+                    email_sender: EmailSenderInterface = Depends(send_payment_confirmation_email)
                     ):
     """
         Process payment for an order
@@ -187,4 +204,34 @@ async def pay_order(order_id: int,
     await validate_payment_method(payment_data)
 
     try:
-        payment_result = await process_payment()
+        payment_result = await process_payment(order, payment_data, user)
+        if not payment_result["success"]:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail={
+                    "message": payment_result["message"],
+                    "error": payment_result.get("error"),
+                    "suggestion": payment_result.get("suggestion")
+                }
+            )
+        order.status = OrderStatusEnum.PAID
+        payment = Payment(
+            user_id=user.id,
+            order_id=order.id,
+            amount=order.total_amount,
+            status=PaymentStatusEnum.SUCCESSFUL,
+            external_payment_id=payment_result["transaction_id"]
+        )
+        db.add(payment)
+
+        for order_item in order.order_items:
+            payment_item = PaymentItem(
+                payment_id=payment.id,
+                order_item_id=order_item.id,
+                price_at_payment=order_item.price_at_order
+            )
+            db.add(payment_item)
+        await db.commit()
+        asyncio.create_task(
+            send_payment_confirmation_email
+        )

@@ -10,7 +10,6 @@ from security.token_manager import JWTAuthManager
 from storages import S3StorageInterface, S3StorageClient
 
 
-
 def get_settings() -> BaseAppSettings:
     """
     Retrieve the application settings based on the current environment.
@@ -52,7 +51,7 @@ def get_jwt_auth_manager(settings: BaseAppSettings = Depends(get_settings)) -> J
 
 
 def get_accounts_email_notificator(
-    settings: BaseAppSettings = Depends(get_settings)
+        settings: BaseAppSettings = Depends(get_settings)
 ) -> EmailSenderInterface:
     """
     Retrieve an instance of the EmailSenderInterface configured with the application settings.
@@ -83,7 +82,7 @@ def get_accounts_email_notificator(
 
 
 def get_s3_storage_client(
-    settings: BaseAppSettings = Depends(get_settings)
+        settings: BaseAppSettings = Depends(get_settings)
 ) -> S3StorageInterface:
     """
     Retrieve an instance of the S3StorageInterface configured with the application settings.
@@ -107,3 +106,15 @@ def get_s3_storage_client(
     )
 
 
+def get_payment_email_sender(
+        settings: BaseAppSettings = Depends(get_settings)
+) -> EmailSenderInterface:
+    return EmailSender(
+        hostname=settings.EMAIL_HOST,
+        port=settings.EMAIL_PORT,
+        email=settings.EMAIL_HOST_USER,
+        password=settings.EMAIL_HOST_PASSWORD,
+        use_tls=settings.EMAIL_USE_TLS,
+        template_dir=settings.PATH_TO_EMAIL_TEMPLATES_DIR,
+        payment_confirmation_template_name=settings.PAYMENT_CONFIRMATION_TEMPLATE_NAME
+    )
