@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy import Integer, ForeignKey, DateTime, DECIMAL, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -18,7 +18,7 @@ class PaymentStatusEnum(str, enum.Enum):
 class Payment(Base):
     __tablename__ = "payments"
 
-    int: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
     order_id: Mapped[int] = mapped_column(Integer, ForeignKey("orders.id"), nullable=False)
     status: Mapped[PaymentStatusEnum] = mapped_column(Enum(PaymentStatusEnum), nullable=False)
@@ -28,7 +28,7 @@ class Payment(Base):
 
     user: Mapped["UserModel"] = relationship(back_populates="payments")
     order: Mapped["Order"] = relationship(back_populates="payment")
-    payment_items = Mapped[list["PaymentItem"]] = relationship(back_populates="payment")
+    payment_items: Mapped[list["PaymentItem"]] = relationship(back_populates="payment")
 
 
 class PaymentItem(Base):
