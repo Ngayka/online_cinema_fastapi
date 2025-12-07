@@ -1,4 +1,5 @@
 import asyncio
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -6,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from starlette import status
 
-from config import get_settings, get_order_by_id_and_user
+from config import get_settings, get_order_by_id_and_user, get_accounts_email_notificator, get_payment_service
 from config.dependencies_auth import get_current_user
 from notifications import EmailSenderInterface
 from database import (
@@ -27,8 +28,9 @@ from schemas import (OrderResponseSchema,
                      OrderDetailSchema,
                      MessageResponseSchema,
                      PaymentRequestSchema)
-from services import process_payment
+
 from config import create_order_service, get_purchased_movie_ids, check_pending_orders
+from services.payments_service import PaymentService
 from validation import is_movie_available, validate_payment_method
 
 router = APIRouter()
@@ -175,8 +177,9 @@ async def pay_order(order_id: int,
                     payment_data: PaymentRequestSchema,
                     db: AsyncSession = Depends(get_db),
                     user: UserModel = Depends(get_current_user),
-                    email_sender: EmailSenderInterface = Depends(send_payment_confirmation_email)
-                    ):
+                    payment_service: PaymentService = Depends(get_payment_service),
+                    email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator)
+):
     """
         Process payment for an order
 
@@ -187,7 +190,8 @@ async def pay_order(order_id: int,
         4. Process payment through payment gateway
         5. Update order status to PAID
         6. Send confirmation email
-        """
+            """
+
     result = await get_order_by_id_and_user(order_id, db, user)
     order = result.scalar_one_or_none()
     if not order:
@@ -204,7 +208,11 @@ async def pay_order(order_id: int,
     await validate_payment_method(payment_data)
 
     try:
-        payment_result = await process_payment(order, payment_data, user)
+        payment_result = await payment_service.process_payment(
+            order=order,
+            payment_data=payment_data,
+            user=user
+        )
         if not payment_result["success"]:
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
@@ -223,6 +231,7 @@ async def pay_order(order_id: int,
             external_payment_id=payment_result["transaction_id"]
         )
         db.add(payment)
+        await db.flush()
 
         for order_item in order.order_items:
             payment_item = PaymentItem(
@@ -232,6 +241,21 @@ async def pay_order(order_id: int,
             )
             db.add(payment_item)
         await db.commit()
-        asyncio.create_task(
-            send_payment_confirmation_email
+        await asyncio.create_task(
+            email_sender.send_payment_confirmation_email(
+                email=user.email,
+                order_id=order.id,
+                amount=Decimal(str(order.total_amount)),
+                transaction_id=payment_result["transaction_id"]
+            )
+        )
+        await db.reset()
+        return OrderResponseSchema.from_orm(order)
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Payment processing error: {str(e)}"
         )
