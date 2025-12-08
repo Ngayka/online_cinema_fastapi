@@ -5,12 +5,8 @@ import stripe
 from fastapi import HTTPException
 
 from config.settings import Settings
-from database import Order, UserModel
-
-from config import get_settings
 from schemas import PaymentRequestSchema
 
-app_settings = get_settings()
 logger = logging.getLogger(__name__)
 
 
@@ -30,9 +26,9 @@ class PaymentService:
 
     async def process_payment(
             self,
-            order: Order,
+            order: "Order",
             payment_data: PaymentRequestSchema,
-            user: UserModel) -> Dict[str, Any]:
+            user: "UserModel") -> Dict[str, Any]:
 
         try:
             amount_in_cents = int(order.total_amount * 100)

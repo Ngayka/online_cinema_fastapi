@@ -30,7 +30,7 @@ from schemas import (OrderResponseSchema,
                      PaymentRequestSchema)
 
 from config import create_order_service, get_purchased_movie_ids, check_pending_orders
-from services.payments_service import PaymentService
+from services.payment_service import PaymentService
 from validation import is_movie_available, validate_payment_method
 
 router = APIRouter()
