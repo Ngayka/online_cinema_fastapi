@@ -7,7 +7,6 @@ from config.settings import TestingSettings, Settings, BaseAppSettings
 from notifications import EmailSenderInterface, EmailSender
 from security.interfaces import JWTAuthManagerInterface
 from security.token_manager import JWTAuthManager
-from services.payments_service import PaymentService
 from storages import S3StorageInterface, S3StorageClient
 
 
@@ -111,10 +110,11 @@ def get_s3_storage_client(
 
 def get_payment_service(
     settings: Settings = Depends(get_settings),
-) -> PaymentService:
+) -> "PaymentService":
     """
     Dependency factory for PaymentService
     """
+    from services.payment_service import PaymentService
     return PaymentService(
         settings=settings,
     )
