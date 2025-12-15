@@ -246,15 +246,15 @@ async def pay_order(order_id: int,
             )
             db.add(payment_item)
         await db.commit()
-        # await asyncio.create_task(
-        #     email_sender.send_payment_confirmation_email(
-        #         email=user.email,
-        #         order_id=order.id,
-        #         amount=Decimal(str(order.total_amount)),
-        #         transaction_id=payment_result["transaction_id"]
-        #     )
-        # )
-        await db.refresh()
+        await asyncio.create_task(
+            email_sender.send_payment_confirmation_email(
+                email=user.email,
+                order_id=order.id,
+                amount=Decimal(str(order.total_amount)),
+                transaction_id=payment_result["transaction_id"]
+            )
+        )
+        await db.refresh(order)
         return OrderResponseSchema.from_orm(order)
     except HTTPException:
         raise

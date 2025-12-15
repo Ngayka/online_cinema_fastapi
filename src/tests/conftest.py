@@ -15,6 +15,7 @@ from database import (
 from database.models.movies import MovieStatusEnum
 from database.populate import CSVDatabaseSeeder
 from main import app
+from schemas import PaymentRequestSchema
 from security.interfaces import JWTAuthManagerInterface
 from security.token_manager import JWTAuthManager
 from storages import S3StorageClient
@@ -291,8 +292,6 @@ async def auth_headers(test_user, jwt_manager):
     return {"Authorization": f"Bearer {token}"}
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture()
 def payment_data():
-    return {
-        "payment_method_id": "pm_mock"
-    }
+    return PaymentRequestSchema(payment_method_id="pm_mock")
