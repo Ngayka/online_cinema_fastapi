@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List, Dict, Any
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 from database.models.payments import PaymentStatusEnum
 from schemas import OrderListSchema, MovieInCartReadSchema
@@ -49,13 +49,14 @@ class PaymentRequestSchema(BaseModel):
     payment_method_id: Optional[str] = None
     card_number: Optional[str] = None
     card_exp_month: Optional[int] = None
-    cart_exp_year: Optional[int] = None
+    card_exp_year: Optional[int] = None
     card_cvc: Optional[int] = None
 
     save_card: bool = False
     return_url: str = "http://localhost:3000/payment-success"
 
     @field_validator("card_number")
+    @classmethod
     def validate_card_number(cls, value):
         if value is not None:
             value = value.replace(" ", "").replace("-", "")
@@ -63,18 +64,20 @@ class PaymentRequestSchema(BaseModel):
             raise ValueError("Invalid card number")
         return value
 
-    @field_validator("cart_exp_month")
+    @field_validator("card_exp_month")
+    @classmethod
     def validate_exp_month(cls, value):
         if value is not None and 0 < value < 12:
             raise ValueError("Invalid expiration month")
         return value
 
-    @field_validator("cart_exp_month")
+    @field_validator("card_exp_year")
+    @classmethod
     def validate_exp_year(cls, value):
         if value is not None and value < datetime.now().year:
             raise ValueError("Card expired")
 
-    @field_validator(mode="after")
+    @model_validator(mode="after")
     def validate_payment_method(self):
         if not self.payment_method_id and not self.card_number:
             raise ValueError("Either payment_method_id or card details are required")
@@ -128,13 +131,40 @@ class PaymentFilterSchema(BaseModel):
     end_date: Optional[datetime] = None
     min_amount: Optional[Decimal] = None
     max_amount: Optional[Decimal] = None
+    email: Optional[str] = None
+    transaction_id: Optional[int] = None
 
     @field_validator("end_date")
+    @classmethod
     def validate_dates(cls, value, info):
         if "start_date" in info.data and value and info.data["start_date"]:
             if value < info.data["start_date"]:
                 raise ValueError("End date must be after start date")
             return value
+
+
+class AdminPaymentResponse(BaseModel):
+    id: int
+    user_id: int
+    user_email: str
+    user_full_name: Optional[str]
+    order_id: int
+    amount: Decimal
+    currency: str
+    status: PaymentStatusEnum
+    created_at: datetime
+    external_payment_id: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class PaginationAdminResponse(BaseModel):
+    payments: List[AdminPaymentResponse]
+    total: int
+    page: int
+    per_page: int
+    total_pages: int
 
 
 class StripeWebhookSchema(BaseModel):
@@ -180,6 +210,7 @@ class PaymentStatusUpdateSchema(BaseModel):
     reason: Optional[str] = None
 
     @field_validator("status")
+    @classmethod
     def validate_status_change(cls, value):
         allowed_transitions = {
             PaymentStatusEnum.SUCCESSFUL: [PaymentStatusEnum.REFUNDED],
@@ -193,9 +224,11 @@ class RefundCreateSchema(BaseModel):
     amount: Optional[Decimal] = None
     reason: str
 
-    @field_validator
-    def validate_refund_amount(cls, value):
-        if value is not None or value <= 0:
-            raise ValueError("Refund amount must be positive")
-        return value
+
+@field_validator("amount")
+@classmethod
+def validate_refund_amount(cls, value):
+    if value is not None or value <= 0:
+        raise ValueError("Refund amount must be positive")
+    return value
 

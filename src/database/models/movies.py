@@ -8,7 +8,6 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 from database.models.base import Base
-from database.models.cart import CartItem
 
 
 class MovieStatusEnum(str, Enum):
@@ -116,7 +115,7 @@ class MovieModel(Base):
     date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
     score: Mapped[float] = mapped_column(Float, nullable=False)
     overview: Mapped[str] = mapped_column(Text, nullable=False)
-    current_price: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
+    current_price: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     status: Mapped[MovieStatusEnum] = mapped_column(
         SQLAlchemyEnum(MovieStatusEnum), nullable=False

@@ -25,7 +25,7 @@ class Order(Base):
 
     order_items: Mapped[list["OrderItem"]] = relationship(back_populates="order")
     user: Mapped["UserModel"] = relationship(back_populates="orders")
-    payments: Mapped[list["Payment"]] = relationship(back_populates="order")
+    payment: Mapped[list["Payment"]] = relationship("Payment", back_populates="order")
 
 
 class OrderItem(Base):
@@ -38,4 +38,4 @@ class OrderItem(Base):
 
     order: Mapped["Order"] = relationship(back_populates="order_items")
     movie: Mapped["MovieModel"] = relationship(back_populates="order_items")
-    payment_items: Mapped[list["PaymentItem"]] = relationship(back_populates="order_items")
+    payment_items: Mapped[list["PaymentItem"]] = relationship("PaymentItem", back_populates="order_items")

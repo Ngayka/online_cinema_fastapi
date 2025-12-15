@@ -1,0 +1,114 @@
+#1 [internal] load local bake definitions
+#1 reading from stdin 415B 0.0s done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.23kB 0.0s done
+#2 DONE 0.1s
+
+#3 [internal] load metadata for docker.io/library/python:3.10
+#3 ...
+
+#4 [auth] library/python:pull token for registry-1.docker.io
+#4 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/python:3.10
+#3 DONE 1.5s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 1.12kB 0.0s done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 DONE 0.0s
+
+#7 [ 1/15] FROM docker.io/library/python:3.10@sha256:220c676d2e30cb0b8421b2606744a6914f5876c0ebf2e08d2ee84cbffbc079be
+#7 resolve docker.io/library/python:3.10@sha256:220c676d2e30cb0b8421b2606744a6914f5876c0ebf2e08d2ee84cbffbc079be 0.0s done
+#7 DONE 0.1s
+
+#6 [internal] load build context
+#6 transferring context: 6.84MB 0.3s done
+#6 DONE 0.3s
+
+#8 [ 8/15] WORKDIR /usr/src/poetry
+#8 CACHED
+
+#9 [ 3/15] RUN python -m pip install --upgrade pip &&     pip install poetry
+#9 CACHED
+
+#10 [ 5/15] COPY ./pyproject.toml /usr/src/poetry/pyproject.toml
+#10 CACHED
+
+#11 [10/15] RUN poetry install --no-root --only main
+#11 CACHED
+
+#12 [ 9/15] RUN poetry lock
+#12 CACHED
+
+#13 [ 6/15] COPY ./alembic.ini /usr/src/alembic/alembic.ini
+#13 CACHED
+
+#14 [ 7/15] RUN poetry config virtualenvs.create false
+#14 CACHED
+
+#15 [ 2/15] RUN apt update && apt install -y     gcc     libpq-dev     netcat-openbsd     postgresql-client     dos2unix     && apt clean
+#15 CACHED
+
+#16 [ 4/15] COPY ./poetry.lock /usr/src/poetry/poetry.lock
+#16 CACHED
+
+#17 [11/15] WORKDIR /usr/src/fastapi
+#17 CACHED
+
+#18 [12/15] COPY ./src .
+#18 DONE 0.2s
+
+#19 [13/15] COPY ./commands /commands
+#19 DONE 0.1s
+
+#20 [14/15] RUN dos2unix /commands/*.sh
+#20 0.993 dos2unix: converting file /commands/deploy.sh to Unix format...
+#20 0.993 dos2unix: converting file /commands/run_migration.sh to Unix format...
+#20 0.993 dos2unix: converting file /commands/run_web_server_dev.sh to Unix format...
+#20 0.994 dos2unix: converting file /commands/run_web_server_prod.sh to Unix format...
+#20 0.994 dos2unix: converting file /commands/set_nginx_basic_auth.sh to Unix format...
+#20 0.996 dos2unix: converting file /commands/setup_mailhog_auth.sh to Unix format...
+#20 0.996 dos2unix: converting file /commands/setup_minio.sh to Unix format...
+#20 DONE 1.0s
+
+#21 [15/15] RUN chmod +x /commands/*.sh
+#21 DONE 0.5s
+
+#22 exporting to image
+#22 exporting layers
+#22 exporting layers 0.6s done
+#22 exporting manifest sha256:b7a893191e7f82a62f501d074f4e4e9fc479b85bc5ebead73d6aaa8ac856e211 0.0s done
+#22 exporting config sha256:34869ea92a45fa67e3e2ff44e217ff083b0028974989aabbe5a5aa180d0a8ac2 0.0s done
+#22 exporting attestation manifest sha256:8a8adbf56c4b6b41464ca4da92620fd1ed5ef30a60f60005313dd7bb0a1df845 0.0s done
+#22 exporting manifest list sha256:4da3695f513da8f015249877d77c8000ef77e0e9906b8296803192c9cc92fe66
+#22 exporting manifest list sha256:4da3695f513da8f015249877d77c8000ef77e0e9906b8296803192c9cc92fe66 0.0s done
+#22 naming to docker.io/library/online_cinema_fastapi_2-web:latest done
+#22 unpacking to docker.io/library/online_cinema_fastapi_2-web:latest
+#22 unpacking to docker.io/library/online_cinema_fastapi_2-web:latest 0.3s done
+#22 DONE 1.3s
+
+#23 resolving provenance for metadata file
+#23 DONE 0.0s
+ web  Built
+ Network online_cinema_fastapi_2_theater_network  Creating
+ Network online_cinema_fastapi_2_theater_network  Created
+ Container postgres_theater  Creating
+ Container minio-theater  Creating
+ Container minio-theater  Created
+ Container postgres_theater  Created
+ Container backend_theater  Creating
+ Container backend_theater  Created
+Attaching to backend_theater
+backend_theater  | INFO:     Will watch for changes in these directories: ['/usr/src/fastapi']
+backend_theater  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+backend_theater  | INFO:     Started reloader process [7] using StatReload
+backend_theater  | INFO:     Started server process [9]
+backend_theater  | INFO:     Waiting for application startup.
+backend_theater  | INFO:     Application startup complete.
+Gracefully stopping... (press Ctrl+C again to force)
+ Container backend_theater  Stopping

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from notifications import EmailSenderInterface
 
 
@@ -41,4 +43,20 @@ class StubEmailSender(EmailSenderInterface):
             email (str): The recipient's email address.
             login_link (str): The login link to include in the email.
         """
+        return None
+
+    async def send_payment_confirmation_email(self,
+                                              email: str,
+                                              order_id: int,
+                                              amount: Decimal,
+                                              transaction_id: int) -> None:
+        """
+               Stub implementation for sending a payment confirmation email.
+
+               Args:
+                   email (str): The recipient's email address.
+                   order_id (int): The order ID.
+                   amount (float): The payment amount.
+                   transaction_id (int): |The transaction ID
+                   """
         return None

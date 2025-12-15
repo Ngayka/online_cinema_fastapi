@@ -16,9 +16,9 @@ class OrderItemResponseSchema(BaseModel):
     price_at_order: Decimal
 
 
-class OrderCreateSchema(BaseModel):
+class OrderItemWithMovieSchema(BaseModel):
     id: int
-    movie: list[MovieInCartReadSchema]
+    movie: MovieInCartReadSchema
     price_at_order: Decimal
 
 
@@ -26,7 +26,7 @@ class OrderResponseSchema(BaseModel):
     id: int
     created_at: datetime
     total_amount: Decimal
-    order_item: List[OrderItemResponseSchema]
+    order_items: List[OrderItemResponseSchema]
 
     class Config:
         from_attributes = True
@@ -35,7 +35,7 @@ class OrderResponseSchema(BaseModel):
 class OrderDetailSchema(BaseModel):
     id: int
     created_at: datetime
-    order_items: List[OrderCreateSchema]
+    order_items: List[OrderItemWithMovieSchema]
     total_amount: Decimal
     status: OrderStatusEnum
 
@@ -44,10 +44,7 @@ class OrderDetailSchema(BaseModel):
 
 
 class OrderListSchema(BaseModel):
-    id: int
-    created_at: datetime
-    total_amount: Decimal
-    status: OrderStatusEnum
+    orders: list[OrderResponseSchema]
 
     class Config:
         from_attributes = True
