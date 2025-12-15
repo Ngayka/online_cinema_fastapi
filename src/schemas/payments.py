@@ -58,24 +58,30 @@ class PaymentRequestSchema(BaseModel):
     @field_validator("card_number")
     @classmethod
     def validate_card_number(cls, value):
-        if value is not None:
-            value = value.replace(" ", "").replace("-", "")
-        if not value.isdigit() or len(value) < 13 or len(value) > 19:
+        if value is None:
+            return value
+        value = value.replace(" ", "").replace("-", "")
+        if not value.isdigit() or not (13 <= len(value) <= 19):
             raise ValueError("Invalid card number")
         return value
 
     @field_validator("card_exp_month")
     @classmethod
     def validate_exp_month(cls, value):
-        if value is not None and 0 < value < 12:
+        if value is None:
+            return value
+        if not (1 <= value <= 12):
             raise ValueError("Invalid expiration month")
         return value
 
     @field_validator("card_exp_year")
     @classmethod
     def validate_exp_year(cls, value):
-        if value is not None and value < datetime.now().year:
+        if value is None:
+            return value
+        if value < datetime.now().year:
             raise ValueError("Card expired")
+        return value
 
     @model_validator(mode="after")
     def validate_payment_method(self):

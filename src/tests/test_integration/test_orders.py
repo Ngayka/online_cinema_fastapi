@@ -197,7 +197,7 @@ async def test_pay_order_with_mock(
 
         response = await client.post(
             f"/api/v1/orders/{order.id}/pay",
-            json={"payment_method_id": "pm_mock"},
+            json=payment_data.dict(),
             headers=auth_headers
         )
 
