@@ -38,12 +38,12 @@ class BaseAppSettings(BaseSettings):
 
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://127.0.0.0.800")
 
-    STRIPE_SECRET_KEY: str = os.getenv("STRIPE_SECRET_KEY")
-    STRIPE_PUBLISHABLE_KEY: str = os.getenv("STRIPE_PUBLISHABLE_KEY")
-    STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
-    STRIPE_CURRENCY: str = os.getenv("STRIPE_CURRENCY", "usd")
-    STRIPE_SUCCESS_URL: str = os.getenv("STRIPE_SUCCESS_URL", "http://localhost:3000/payment-success")
-    STRIPE_CANCEL_URL: str = os.getenv("STRIPE_CANCEL_URL", "http://localhost:3000/payment-cancel")
+    STRIPE_SECRET_KEY: str | None = os.getenv("STRIPE_SECRET_KEY")
+    STRIPE_PUBLISHABLE_KEY: str | None = os.getenv("STRIPE_PUBLISHABLE_KEY")
+    STRIPE_WEBHOOK_SECRET: str | None = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+    STRIPE_CURRENCY: str | None = os.getenv("STRIPE_CURRENCY", "usd")
+    STRIPE_SUCCESS_URL: str | None = os.getenv("STRIPE_SUCCESS_URL", "http://localhost:3000/payment-success")
+    STRIPE_CANCEL_URL: str | None = os.getenv("STRIPE_CANCEL_URL", "http://localhost:3000/payment-cancel")
 
     MOCK_PAYMENTS: bool = os.getenv("MOCK_PAYMENTS", "True").lower() == "true"
 

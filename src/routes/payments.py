@@ -2,18 +2,18 @@ import asyncio
 from decimal import Decimal
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from starlette import status
 
-from config import get_settings, get_order_by_id_and_user, get_accounts_email_notificator, get_payment_service
+from config import get_settings
 from config.dependencies_auth import get_current_user
 from database import (
     UserModel,
     get_db, Payment)
-from schemas import PaymentListSchema, PaymentDetailSchema
+from schemas import PaymentListSchema, PaymentDetailSchema, MessageResponseSchema
 
 router = APIRouter()
 app_settings = get_settings()
@@ -30,10 +30,10 @@ app_settings = get_settings()
             }
             )
 async def get_all_users_payment(
-    page: int = Query(1, ge=1, description="Page number"),
-    per_page: int = Query(20, ge=1, le=50, description="Payments per page"),
-    user: UserModel = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+        page: int = Query(1, ge=1, description="Page number"),
+        per_page: int = Query(20, ge=1, le=50, description="Payments per page"),
+        user=Depends(get_current_user),
+        db: AsyncSession = Depends(get_db)
 ):
     """
         Get payment history for current user with pagination
@@ -71,8 +71,8 @@ async def get_all_users_payment(
             }
             )
 async def get_payment_by_id(
-        payment_id: Query(..., ge=1, description="Payment ID"),
-        user: UserModel = Depends(get_current_user),
+        payment_id: int = Path(..., ge=1, description="Payment ID"),
+        user=Depends(get_current_user),
         db: AsyncSession = Depends(get_db)
 ):
     """
@@ -84,12 +84,12 @@ async def get_payment_by_id(
         Returns payment details including payment items
         """
     query = (select(Payment)
-            .where(
-                Payment.user_id == user.id,
-                Payment.id == payment_id
-        )
-        .options(selectinload(Payment.payment_items)
-        ))
+             .where(
+        Payment.user_id == user.id,
+        Payment.id == payment_id
+    )
+             .options(selectinload(Payment.payment_items)
+                      ))
 
     result = await db.execute(query)
     payment = result.scalar_one_or_none()
@@ -97,4 +97,3 @@ async def get_payment_by_id(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Payment not found or you don't have access to it")
     return payment
-
