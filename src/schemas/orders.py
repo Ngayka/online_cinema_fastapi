@@ -1,6 +1,6 @@
 from typing import List
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, ConfigDict
 from datetime import datetime
 from decimal import Decimal
 
@@ -15,6 +15,8 @@ class OrderItemResponseSchema(BaseModel):
     movie_id: int
     price_at_order: Decimal
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class OrderItemWithMovieSchema(BaseModel):
     id: int
@@ -28,8 +30,7 @@ class OrderResponseSchema(BaseModel):
     total_amount: Decimal
     order_items: List[OrderItemResponseSchema]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OrderDetailSchema(BaseModel):

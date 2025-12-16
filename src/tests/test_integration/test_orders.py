@@ -8,45 +8,6 @@ from sqlalchemy.orm import selectinload
 from database import Order, OrderStatusEnum, CartItem, Cart
 
 
-# @pytest.mark.asyncio
-# async def test_create_order_success(
-#         self,
-#         client,
-#         db_session,
-#         seed_user_groups,
-#         test_user,
-#         test_movie
-# ):
-#     """Test successful order creation from cart"""
-#     from database import CartItem, Cart
-#
-#     cart = Cart(user_id=test_user.id)
-#     db_session.add(cart)
-#     await db_session.flush()
-#
-#     cart_item = CartItem(
-#         cart_id=cart.id, movie_id=test_movie.id
-#     )
-#     db_session.add(cart_item)
-#     await db_session.commit()
-#
-#     with patch("src.config.dependencies_auth.get_current_user", return_value=test_user):
-#         with patch("src.routes.orders.get_purchased_movie_ids", new_callable=AsyncMock) as mock_purchased:
-#             mock_purchased.return_value = []
-#             with patch("src.routes.orders.is_movie_available", return_value=True):
-#                 with patch("src.routes.orders.check_pending_orders", new_callable=AsyncMock) as mock_pending:
-#                     mock_pending.return_value = False
-#                     with patch("src.routes.orders.create_order_service",
-#                                new_callable=AsyncMock) as mock_create:
-#                         fake_order = Order(
-#                             id=1,
-#                             user_id=test_user.id,
-#                             total_amount=Decimal("9.99"),
-#                             status=OrderStatusEnum.PENDING
-#                         )
-#                         mock_create.return_value = fake_order
-#                         response = await client.post("/api/v1/orders/")
-#                         assert response.status_code == 201
 @pytest.mark.asyncio
 async def test_create_order_success(
         client,
@@ -187,21 +148,36 @@ async def test_pay_order_with_mock(
 
     order = await create_order_service(db_session, cart, user=test_user)
 
-    with patch("services.payment_service.PaymentService.process_payment", new_callable=AsyncMock) as mock_payment:
-        mock_payment.return_value = {
-            "success": True,
-            "transaction_id": "mock_tx_123",
-            "message": "Payment successful",
-            "requires_action": False
-        }
+    assert order.order_items
+    assert order.order_items[0].price_at_order is not None
+
+    from routes.orders import get_payment_service
+    from main import app
+
+    class FakePaymentService:
+        async def process_payment(self, order, payment_data, user):
+            return {
+                "success": True,
+                "transaction_id": "mock_tx_123",
+                "message": "Payment successful",
+                "requires_action": False,
+            }
+
+    app.dependency_overrides[get_payment_service] = lambda: FakePaymentService()
+
+    try:
 
         response = await client.post(
             f"/api/v1/orders/{order.id}/pay",
-            json=payment_data.dict(),
+            json=payment_data.model_dump(),
             headers=auth_headers
         )
 
         assert response.status_code == 200
         data = response.json()
+
         assert data["id"] == order.id
-        assert data["total_amount"] == float(order.total_amount)
+        assert float(data["total_amount"]) == float(order.total_amount)
+
+    finally:
+        app.dependency_overrides.clear()
