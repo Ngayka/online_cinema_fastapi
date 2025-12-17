@@ -5,7 +5,7 @@ from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, field_validator, model_validator
 
 from database.models.payments import PaymentStatusEnum
-from schemas import OrderListSchema, MovieInCartReadSchema
+from schemas import MovieInCartReadSchema, OrderDetailSchema, OrderItemWithMovieSchema
 
 
 class PaymentCreateSchema(BaseModel):
@@ -94,6 +94,7 @@ class PaymentListSchema(BaseModel):
     id: int
     order_id: int
     amount: Decimal
+    external_payment_id: str | None
     status: PaymentStatusEnum
     created_at: datetime
 
@@ -109,7 +110,7 @@ class PaymentDetailSchema(BaseModel):
     created_at: datetime
     external_payment_id: Optional[str]
 
-    order: OrderListSchema
+    order: OrderDetailSchema
 
     payment_items: list["PaymentItemSchema"]
 
@@ -123,10 +124,20 @@ class PaymentItemSchema(BaseModel):
     order_item_id: int
     price_at_payment: Decimal
 
-    movie: MovieInCartReadSchema
+    order_items: OrderItemWithMovieSchema
 
     class Config:
         from_attributes = True
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            id=obj.id,
+            payment_id=obj.payment_id,
+            order_item_id=obj.order_item_id,
+            price_at_payment=obj.price_at_payment,
+            movie=obj.order_item.movie
+        )
 
 
 class PaymentFilterSchema(BaseModel):
