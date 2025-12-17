@@ -1,5 +1,3 @@
-import asyncio
-from decimal import Decimal
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
@@ -12,14 +10,14 @@ from config import get_settings
 from config.dependencies_auth import get_current_user
 from database import (
     UserModel,
-    get_db, Payment)
+    get_db, Payment, PaymentItem, OrderItem, Order)
 from schemas import PaymentListSchema, PaymentDetailSchema, MessageResponseSchema
 
 router = APIRouter()
 app_settings = get_settings()
 
 
-@router.get("/payments",
+@router.get("/",
             response_model=List[PaymentListSchema],
             summary="Add user`s payment history",
             status_code=status.HTTP_200_OK,
@@ -56,10 +54,10 @@ async def get_all_users_payment(
     if not payments and page == 1:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="No payments history")
-    return payments
+    return [PaymentListSchema.from_orm(p) for p in payments]
 
 
-@router.get("/payments/{payment_id}",
+@router.get("/{payment_id}",
             response_model=PaymentDetailSchema,
             summary="Get payment details",
             status_code=status.HTTP_200_OK,
@@ -84,12 +82,18 @@ async def get_payment_by_id(
         Returns payment details including payment items
         """
     query = (select(Payment)
-             .where(
+    .where(
         Payment.user_id == user.id,
         Payment.id == payment_id
     )
-             .options(selectinload(Payment.payment_items)
-                      ))
+    .options(
+        selectinload(Payment.order)
+        .selectinload(Order.order_items)
+        .selectinload(OrderItem.movie),
+        selectinload(Payment.payment_items)
+        .selectinload(PaymentItem.order_items)
+        .selectinload(OrderItem.movie),
+    ))
 
     result = await db.execute(query)
     payment = result.scalar_one_or_none()
