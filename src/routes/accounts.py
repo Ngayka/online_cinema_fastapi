@@ -6,6 +6,7 @@ from sqlalchemy import select, delete
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
+from tasks.email_tasks import send_activation_email_task
 
 from config import get_jwt_auth_manager, get_settings, BaseAppSettings, get_accounts_email_notificator
 from database import (
@@ -131,7 +132,7 @@ async def register_user(
     else:
         activation_link = "http://127.0.0.1/accounts/activate/"
 
-        await email_sender.send_activation_email(
+        send_activation_email_task.delay(
             new_user.email,
             activation_link
         )
