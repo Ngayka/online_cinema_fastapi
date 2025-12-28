@@ -1,6 +1,6 @@
 services:
   db:
-    image: 'postgres:latest'
+    image: 'postgres:16'
     container_name: postgres_theater
     env_file:
       - .env
@@ -134,8 +134,6 @@ services:
       - ./configs/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - web
-    env_file:
-      - ./docker/nginx/.env
     networks:
       - theater_network
 
