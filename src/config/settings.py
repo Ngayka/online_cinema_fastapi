@@ -52,6 +52,10 @@ class BaseAppSettings(BaseSettings):
         return f"http://{self.S3_STORAGE_HOST}:{self.S3_STORAGE_PORT}"
 
     @property
+    def REDIS_URL(self) -> str:
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+
+    @property
     def stripe_configured(self) -> bool:
         return bool(self.STRIPE_SECRET_KEY and not self.STRIPE_SECRET_KEY.startswith("sk_test_"))
 
