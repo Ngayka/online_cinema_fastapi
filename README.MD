@@ -72,7 +72,10 @@ Understanding the project's directory structure is crucial for navigating and ma
     ├── config
     │   ├── __init__.py
     │   ├── dependencies.py
-    │   └── settings.py
+    │   ├── settings.py
+    |   ├── celery_app.py
+    │   ├── dependencies_auth.py
+    │   ├── order_config.py
     ├── database
     │   ├── __init__.py
     │   ├── migrations
@@ -88,6 +91,9 @@ Understanding the project's directory structure is crucial for navigating and ma
     │   │   ├── accounts.py
     │   │   ├── base.py
     │   │   └── movies.py
+    │   │   ├── cart.py
+    │   │   ├── orders.py
+    │   │   ├── payments.py
     │   ├── populate.py
     │   ├── seed_data
     │   │   ├── imdb_movies.csv
@@ -118,7 +124,10 @@ Understanding the project's directory structure is crucial for navigating and ma
     │   ├── __init__.py
     │   ├── accounts.py
     │   ├── movies.py
-    │   └── profiles.py
+    │   ├── profiles.py
+    │   ├── cart.py
+    │   ├── orders.py
+    │   ├── payments.py
     ├── schemas
     │   ├── __init__.py
     │   ├── accounts.py
@@ -126,6 +135,9 @@ Understanding the project's directory structure is crucial for navigating and ma
     │   │   ├── __init__.py
     │   │   └── movies.py
     │   ├── movies.py
+    │   ├── cart.py
+    │   ├── orders.py
+    │   ├── payments.py
     │   └── profiles.py
     ├── security
     │   ├── __init__.py
@@ -134,10 +146,17 @@ Understanding the project's directory structure is crucial for navigating and ma
     │   ├── passwords.py
     │   ├── token_manager.py
     │   └── utils.py
+    ├── servises
+    │   ├── __init__.py
+    │   ├── payment_servise.py
     ├── storages
     │   ├── __init__.py
     │   ├── interfaces.py
     │   └── s3.py
+    ├── tasks
+    │   ├── __init__.py
+    │   ├── cleanup_tasks.py
+    │   └── email_tasks.py
     ├── tests
     │   ├── __init__.py
     │   ├── conftest.py
@@ -157,7 +176,10 @@ Understanding the project's directory structure is crucial for navigating and ma
     │       ├── __init__.py
     │       ├── test_accounts.py
     │       ├── test_movies.py
-    │       └── test_profiles.py
+    │       ├── test_profiles.py
+            ├── test_cart.py
+    │       ├── test_orders.py
+    │       └── test_payments.py
     └── validation
         ├── __init__.py
         └── profile.py

@@ -9,21 +9,13 @@ from database import Payment, PaymentStatusEnum, CartItem, Cart, PaymentItem
 
 @pytest.mark.asyncio
 async def test_get_all_payments(
-        client,
-        test_user,
-        db_session,
-        test_cart,
-        auth_headers,
-        test_movie
+    client, test_user, db_session, test_cart, auth_headers, test_movie
 ):
     test_movie.current_price = Decimal("5.25")
     db_session.add(test_movie)
     await db_session.commit()
 
-    cart_item = CartItem(
-        cart_id=test_cart.id,
-        movie_id=test_movie.id
-    )
+    cart_item = CartItem(cart_id=test_cart.id, movie_id=test_movie.id)
     db_session.add(cart_item)
     await db_session.commit()
 
@@ -42,7 +34,7 @@ async def test_get_all_payments(
         order_id=order.id,
         amount=Decimal("9.99"),
         status=PaymentStatusEnum.SUCCESSFUL,
-        external_payment_id="test_tx_123"
+        external_payment_id="test_tx_123",
     )
     db_session.add(payment)
     await db_session.commit()
@@ -57,21 +49,13 @@ async def test_get_all_payments(
 
 @pytest.mark.asyncio
 async def test_payment_by_id(
-    client,
-    test_user,
-    db_session,
-    test_cart,
-    auth_headers,
-    test_movie
+    client, test_user, db_session, test_cart, auth_headers, test_movie
 ):
     test_movie.current_price = Decimal("5.25")
     db_session.add(test_movie)
     await db_session.commit()
 
-    cart_item = CartItem(
-        cart_id=test_cart.id,
-        movie_id=test_movie.id
-    )
+    cart_item = CartItem(cart_id=test_cart.id, movie_id=test_movie.id)
 
     db_session.add(cart_item)
     await db_session.commit()
@@ -93,7 +77,7 @@ async def test_payment_by_id(
         amount=Decimal("9.99"),
         status=PaymentStatusEnum.SUCCESSFUL,
         external_payment_id="test_tx_123",
-        order=order
+        order=order,
     )
     db_session.add(payment)
     await db_session.flush()
@@ -101,7 +85,7 @@ async def test_payment_by_id(
     payment_item = PaymentItem(
         payment_id=payment.id,
         order_item_id=order.order_items[0].id,
-        price_at_payment=order.order_items[0].price_at_order
+        price_at_payment=order.order_items[0].price_at_order,
     )
     db_session.add(payment_item)
     await db_session.commit()

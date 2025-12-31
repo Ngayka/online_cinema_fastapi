@@ -136,12 +136,13 @@ class PaymentItemSchema(BaseModel):
             payment_id=obj.payment_id,
             order_item_id=obj.order_item_id,
             price_at_payment=obj.price_at_payment,
-            movie=obj.order_item.movie
+            movie=obj.order_item.movie,
         )
 
 
 class PaymentFilterSchema(BaseModel):
     """Admin Options"""
+
     user_id: Optional[int] = None
     status: Optional[PaymentStatusEnum] = None
     start_date: Optional[datetime] = None
@@ -223,16 +224,21 @@ class PaymentConfirmationEmailSchema(BaseModel):
 
 class PaymentStatusUpdateSchema(BaseModel):
     """for admins"""
+
     status: PaymentStatusEnum
     reason: Optional[str] = None
 
     @field_validator("status")
     @classmethod
-    def validate_status_change(cls, value):
+    def validate_status_change(cls, value, info):
+        old_status = info.data.get("status")
         allowed_transitions = {
             PaymentStatusEnum.SUCCESSFUL: [PaymentStatusEnum.REFUNDED],
-            PaymentStatusEnum.CANCELLED: [PaymentStatusEnum.SUCCESSFUL]
+            PaymentStatusEnum.CANCELLED: [PaymentStatusEnum.SUCCESSFUL],
         }
+        if old_status and old_status in allowed_transitions:
+            if value not in allowed_transitions[old_status]:
+                return ValueError(f"Cannot change status from {old_status} to {value}")
         return value
 
 
@@ -241,11 +247,9 @@ class RefundCreateSchema(BaseModel):
     amount: Optional[Decimal] = None
     reason: str
 
-
-@field_validator("amount")
-@classmethod
-def validate_refund_amount(cls, value):
-    if value is not None or value <= 0:
-        raise ValueError("Refund amount must be positive")
-    return value
-
+    @field_validator("amount")
+    @classmethod
+    def validate_refund_amount(cls, value):
+        if value is not None and value <= 0:
+            raise ValueError("Refund amount must be positive")
+        return value

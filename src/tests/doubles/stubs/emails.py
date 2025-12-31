@@ -35,7 +35,9 @@ class StubEmailSender(EmailSenderInterface):
         """
         return None
 
-    async def send_password_reset_complete_email(self, email: str, login_link: str) -> None:
+    async def send_password_reset_complete_email(
+        self, email: str, login_link: str
+    ) -> None:
         """
         Stub implementation for sending a password reset complete email.
 
@@ -45,18 +47,16 @@ class StubEmailSender(EmailSenderInterface):
         """
         return None
 
-    async def send_payment_confirmation_email(self,
-                                              email: str,
-                                              order_id: int,
-                                              amount: Decimal,
-                                              transaction_id: int) -> None:
+    async def send_payment_confirmation_email(
+        self, email: str, order_id: int, amount: Decimal, transaction_id: int
+    ) -> None:
         """
-               Stub implementation for sending a payment confirmation email.
+        Stub implementation for sending a payment confirmation email.
 
-               Args:
-                   email (str): The recipient's email address.
-                   order_id (int): The order ID.
-                   amount (float): The payment amount.
-                   transaction_id (int): |The transaction ID
-                   """
+        Args:
+            email (str): The recipient's email address.
+            order_id (int): The order ID.
+            amount (float): The payment amount.
+            transaction_id (int): |The transaction ID
+        """
         return None

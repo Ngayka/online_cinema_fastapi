@@ -5,7 +5,9 @@ from config.dependencies import get_settings
 
 settings = get_settings()
 
-celery_app = Celery(main="online_movie", broker=settings.REDIS_URL, backend=settings.REDIS_URL)
+celery_app = Celery(
+    main="online_movie", broker=settings.REDIS_URL, backend=settings.REDIS_URL
+)
 celery_app.autodiscover_tasks(packages=["tasks"])
 
 celery_app.conf.beat_schedule = {

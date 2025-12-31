@@ -12,13 +12,13 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 async def get_current_user(
-        token: str = Depends(oauth2_scheme),
-        jwt_manager: JWTAuthManagerInterface = Depends(get_jwt_auth_manager),
-        session: AsyncSession = Depends(get_db),
+    token: str = Depends(oauth2_scheme),
+    jwt_manager: JWTAuthManagerInterface = Depends(get_jwt_auth_manager),
+    session: AsyncSession = Depends(get_db),
 ) -> UserModel:
     try:
         payload = jwt_manager.decode_access_token(token)
-        print(f"=== AUTH DEBUG ===")
+        print("=== AUTH DEBUG ===")
         print(f"Payload: {payload}")
         user_email: str = payload.get("sub")
         user_id: int = payload.get("user_id")
@@ -26,11 +26,14 @@ async def get_current_user(
 
     except Exception as e:
         print(f"Token decode error: {e}")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Invalid or expired token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token"
+        )
 
     result = await session.execute(
-        select(UserModel).options(selectinload(UserModel.cart)).where(UserModel.email == user_email)
+        select(UserModel)
+        .options(selectinload(UserModel.cart))
+        .where(UserModel.email == user_email)
     )
     user = result.scalar_one_or_none()
     print(f"User found: {user is not None}")

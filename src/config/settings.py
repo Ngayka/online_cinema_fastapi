@@ -8,7 +8,9 @@ from pydantic_settings import BaseSettings
 class BaseAppSettings(BaseSettings):
     BASE_DIR: Path = Path(__file__).parent.parent
     PATH_TO_DB: str = str(BASE_DIR / "database" / "source" / "theater.db")
-    PATH_TO_MOVIES_CSV: str = str(BASE_DIR / "database" / "seed_data" / "imdb_movies.csv")
+    PATH_TO_MOVIES_CSV: str = str(
+        BASE_DIR / "database" / "seed_data" / "imdb_movies.csv"
+    )
 
     PATH_TO_EMAIL_TEMPLATES_DIR: str = str(BASE_DIR / "notifications" / "templates")
     ACTIVATION_EMAIL_TEMPLATE_NAME: str = "activation_request.html"
@@ -42,8 +44,12 @@ class BaseAppSettings(BaseSettings):
     STRIPE_PUBLISHABLE_KEY: str | None = os.getenv("STRIPE_PUBLISHABLE_KEY")
     STRIPE_WEBHOOK_SECRET: str | None = os.getenv("STRIPE_WEBHOOK_SECRET", "")
     STRIPE_CURRENCY: str | None = os.getenv("STRIPE_CURRENCY", "usd")
-    STRIPE_SUCCESS_URL: str | None = os.getenv("STRIPE_SUCCESS_URL", "http://localhost:3000/payment-success")
-    STRIPE_CANCEL_URL: str | None = os.getenv("STRIPE_CANCEL_URL", "http://localhost:3000/payment-cancel")
+    STRIPE_SUCCESS_URL: str | None = os.getenv(
+        "STRIPE_SUCCESS_URL", "http://localhost:3000/payment-success"
+    )
+    STRIPE_CANCEL_URL: str | None = os.getenv(
+        "STRIPE_CANCEL_URL", "http://localhost:3000/payment-cancel"
+    )
 
     MOCK_PAYMENTS: bool = os.getenv("MOCK_PAYMENTS", "True").lower() == "true"
 
@@ -57,7 +63,9 @@ class BaseAppSettings(BaseSettings):
 
     @property
     def stripe_configured(self) -> bool:
-        return bool(self.STRIPE_SECRET_KEY and not self.STRIPE_SECRET_KEY.startswith("sk_test_"))
+        return bool(
+            self.STRIPE_SECRET_KEY and not self.STRIPE_SECRET_KEY.startswith("sk_test_")
+        )
 
     @property
     def use_mock_payments(self) -> bool:
@@ -94,9 +102,9 @@ class TestingSettings(BaseAppSettings):
     MOCK_PAYMENTS: bool = True
 
     def model_post_init(self, __context: dict[str, Any] | None = None) -> None:
-        object.__setattr__(self, 'PATH_TO_DB', ":memory:")
+        object.__setattr__(self, "PATH_TO_DB", ":memory:")
         object.__setattr__(
             self,
-            'PATH_TO_MOVIES_CSV',
-            str(self.BASE_DIR / "database" / "seed_data" / "test_data.csv")
+            "PATH_TO_MOVIES_CSV",
+            str(self.BASE_DIR / "database" / "seed_data" / "test_data.csv"),
         )

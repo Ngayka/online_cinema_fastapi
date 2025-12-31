@@ -26,7 +26,7 @@ class EmailSender(EmailSenderInterface):
         activation_complete_email_template_name: str,
         password_email_template_name: str,
         password_complete_email_template_name: str,
-        payment_confirmation_template_name: str
+        payment_confirmation_template_name: str,
     ):
         self._hostname = hostname
         self._port = port
@@ -34,14 +34,22 @@ class EmailSender(EmailSenderInterface):
         self._password = password
         self._use_tls = use_tls
         self._activation_email_template_name = activation_email_template_name
-        self._activation_complete_email_template_name = activation_complete_email_template_name
+        self._activation_complete_email_template_name = (
+            activation_complete_email_template_name
+        )
         self._password_email_template_name = password_email_template_name
-        self._password_complete_email_template_name = password_complete_email_template_name
-        self._payment_confirmation_email_template_name = payment_confirmation_template_name
+        self._password_complete_email_template_name = (
+            password_complete_email_template_name
+        )
+        self._payment_confirmation_email_template_name = (
+            payment_confirmation_template_name
+        )
 
         self._env = Environment(loader=FileSystemLoader(template_dir))
 
-    async def _send_email(self, recipient: str, subject: str, html_content: str) -> None:
+    async def _send_email(
+        self, recipient: str, subject: str, html_content: str
+    ) -> None:
         """
         Asynchronously send an email with the given subject and HTML content.
 
@@ -60,7 +68,9 @@ class EmailSender(EmailSenderInterface):
         message.attach(MIMEText(html_content, "html"))
 
         try:
-            smtp = aiosmtplib.SMTP(hostname=self._hostname, port=self._port, start_tls=self._use_tls)
+            smtp = aiosmtplib.SMTP(
+                hostname=self._hostname, port=self._port, start_tls=self._use_tls
+            )
             await smtp.connect()
             if self._use_tls:
                 await smtp.starttls()
@@ -110,7 +120,9 @@ class EmailSender(EmailSenderInterface):
         subject = "Password Reset Request"
         await self._send_email(email, subject, html_content)
 
-    async def send_password_reset_complete_email(self, email: str, login_link: str) -> None:
+    async def send_password_reset_complete_email(
+        self, email: str, login_link: str
+    ) -> None:
         """
         Send a password reset completion email asynchronously.
 
@@ -123,12 +135,13 @@ class EmailSender(EmailSenderInterface):
         subject = "Your Password Has Been Successfully Reset"
         await self._send_email(email, subject, html_content)
 
-    async def send_payment_confirmation_email(self,
-                                              email: str,
-                                              order_id: int,
-                                              amount: Decimal,
-                                              transaction_id: int,
-                                             ) -> None:
+    async def send_payment_confirmation_email(
+        self,
+        email: str,
+        order_id: int,
+        amount: Decimal,
+        transaction_id: int,
+    ) -> None:
         """
         Send payment confirmation email
 
@@ -143,16 +156,24 @@ class EmailSender(EmailSenderInterface):
         """
         try:
 
-            template= self._env.get_template(self._payment_confirmation_email_template_name)
-            html_content = template.render(email=email,
-                                           order_id=order_id,
-                                           amount=amount,
-                                           transaction_id=transaction_id,
-                                           date = datetime.now.strftime("%Y-%m-%d %H:%M"))
+            template = self._env.get_template(
+                self._payment_confirmation_email_template_name
+            )
+            html_content = template.render(
+                email=email,
+                order_id=order_id,
+                amount=amount,
+                transaction_id=transaction_id,
+                date=datetime.now.strftime("%Y-%m-%d %H:%M"),
+            )
             subject = f"Payment Confirmation - Order #{order_id}"
             await self._send_email(email, subject, html_content)
-            logging.info(f"Payment confirmation email sent to {email} for order #{order_id}")
+            logging.info(
+                f"Payment confirmation email sent to {email} for order #{order_id}"
+            )
 
         except Exception as error:
-            logging.error(f"Failed to send payment confirmation email to {email}: {error}")
+            logging.error(
+                f"Failed to send payment confirmation email to {email}: {error}"
+            )
             raise BaseEmailError(f"Failed to send payment confirmation email: {error}")

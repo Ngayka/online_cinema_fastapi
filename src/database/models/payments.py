@@ -19,12 +19,20 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    order_id: Mapped[int] = mapped_column(Integer, ForeignKey("orders.id"), nullable=False)
-    status: Mapped[PaymentStatusEnum] = mapped_column(Enum(PaymentStatusEnum), nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False
+    )
+    order_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("orders.id"), nullable=False
+    )
+    status: Mapped[PaymentStatusEnum] = mapped_column(
+        Enum(PaymentStatusEnum), nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     amount: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
-    external_payment_id:  Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    external_payment_id: Mapped[Optional[str]] = mapped_column(
+        String(100), nullable=True
+    )
 
     user: Mapped["UserModel"] = relationship(back_populates="payments")
     order: Mapped["Order"] = relationship("Order", back_populates="payment")
@@ -40,5 +48,6 @@ class PaymentItem(Base):
     price_at_payment: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
 
     payment: Mapped["Payment"] = relationship(back_populates="payment_items")
-    order_items: Mapped["OrderItem"] = relationship("OrderItem", back_populates="payment_items")
-
+    order_items: Mapped["OrderItem"] = relationship(
+        "OrderItem", back_populates="payment_items"
+    )
