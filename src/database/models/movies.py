@@ -6,7 +6,8 @@ from sqlalchemy import String, Float, Text, DECIMAL, UniqueConstraint, Date, For
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import Enum as SQLAlchemyEnum
 
-from database import Base
+from database.models.base import Base
+from database.models.cart import CartItem
 
 
 class MovieStatusEnum(str, Enum):
@@ -119,6 +120,8 @@ class MovieModel(Base):
     )
     budget: Mapped[float] = mapped_column(DECIMAL(15, 2), nullable=False)
     revenue: Mapped[float] = mapped_column(Float, nullable=False)
+
+    cart_items: Mapped[list["CartItem"]] = relationship("CartItem", back_populates="movie")
 
     country_id: Mapped[int] = mapped_column(ForeignKey("countries.id"), nullable=False)
     country: Mapped["CountryModel"] = relationship("CountryModel", back_populates="movies")
