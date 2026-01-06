@@ -16,7 +16,6 @@ from database import (
     Cart,
     CartItem,
     Order,
-    OrderItem,
     OrderStatusEnum,
     PaymentItem,
     Payment,
@@ -140,25 +139,28 @@ async def return_order_by_id(
     description="Cancel order by id, if order status is pending",
     status_code=status.HTTP_200_OK
 )
-async def cancel_order(order_id: int,
-                       db: AsyncSession = Depends(get_db),
-                       user: UserModel = Depends(get_current_user)) -> MessageResponseSchema:
+async def cancel_order(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: UserModel = Depends(get_current_user),
+) -> MessageResponseSchema:
     """
     Description
     Cancels an order by its ID.
     Only orders with status PENDING can be cancelled.
     The order must belong to the authenticated user.
     """
-
-    result = await get_order_by_id_and_user(order_id, db, user)
-    order = result.scalar_one_or_none()
+    order = await get_order_by_id_and_user(order_id, db, user)
     if not order:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail="Order not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Order not found"
+        )
     if order.status != OrderStatusEnum.PENDING:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"You can`t cancel order with status: {order.status}. "
-                                   f"Only pending orders can be cancelled")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"You can`t cancel order with status: {order.status}. "
+            f"Only pending orders can be cancelled",
+        )
     order.status = OrderStatusEnum.CANCELED
     await db.commit()
     await db.refresh(order)

@@ -15,9 +15,7 @@ async def create_order_service(db: AsyncSession, cart: Cart, user: UserModel) ->
         total_amount += price
 
     order = Order(
-        user_id=user.id,
-        status=OrderStatusEnum.PENDING,
-        total_amount=total_amount
+        user_id=user.id, status=OrderStatusEnum.PENDING, total_amount=total_amount
     )
 
     db.add(order)
@@ -28,49 +26,50 @@ async def create_order_service(db: AsyncSession, cart: Cart, user: UserModel) ->
         order_item = OrderItem(
             order_id=order.id,
             movie_id=cart_item.movie_id,
-            price_at_order=cart_item.movie.current_price
+            price_at_order=cart_item.movie.current_price,
         )
         db.add(order_item)
     await db.commit()
 
-    result = await db.execute(select(Order)
-                        .where(Order.id == order.id)
-                        .options(
-                            selectinload(Order.order_items).
-                            selectinload(OrderItem.movie)
-        )
+    result = await db.execute(
+        select(Order)
+        .where(Order.id == order.id)
+        .options(selectinload(Order.order_items).selectinload(OrderItem.movie))
     )
     return result.scalar_one()
 
 
-async def check_pending_orders(db: AsyncSession, user_id: int, movie_ids: list[int]) -> bool:
-    result = await db.execute(select(OrderItem)
-                        .join(Order)
-                        .where(
-                            Order.user_id == user_id,
-                            Order.status == OrderStatusEnum.PENDING,
-                            OrderItem.movie_id.in_(movie_ids)
+async def check_pending_orders(
+    db: AsyncSession, user_id: int, movie_ids: list[int]
+) -> bool:
+    result = await db.execute(
+        select(OrderItem)
+        .join(Order)
+        .where(
+            Order.user_id == user_id,
+            Order.status == OrderStatusEnum.PENDING,
+            OrderItem.movie_id.in_(movie_ids),
         )
     )
     return result.scalars().first() is not None
 
 
 async def get_purchased_movie_ids(db: AsyncSession, user_id: int) -> set[int]:
-    result = await db.execute(select(OrderItem.movie_id).join(Order).where(Order.user_id == user_id,
-                                                                     Order.status == OrderStatusEnum.PAID))
+    result = await db.execute(
+        select(OrderItem.movie_id)
+        .join(Order)
+        .where(Order.user_id == user_id, Order.status == OrderStatusEnum.PAID)
+    )
 
     return set(result.scalars().all())
 
 
-async def get_order_by_id_and_user(order_id: int, db: AsyncSession, user: UserModel) -> Order | None:
-    result = await db.execute(select(Order)
-    .where(
-        Order.user_id == user.id,
-        Order.id == order_id
-    )
-    .options(
-        selectinload(Order.order_items)
-        .selectinload(OrderItem.movie)
-    )
+async def get_order_by_id_and_user(
+    order_id: int, db: AsyncSession, user: UserModel
+) -> Order | None:
+    result = await db.execute(
+        select(Order)
+        .where(Order.user_id == user.id, Order.id == order_id)
+        .options(selectinload(Order.order_items).selectinload(OrderItem.movie))
     )
     return result.scalars().first()
