@@ -13,6 +13,7 @@ class BaseAppSettings(BaseSettings):
     PATH_TO_EMAIL_TEMPLATES_DIR: str = str(BASE_DIR / "notifications" / "templates")
     ACTIVATION_EMAIL_TEMPLATE_NAME: str = "activation_request.html"
     ACTIVATION_COMPLETE_EMAIL_TEMPLATE_NAME: str = "activation_complete.html"
+    PAYMENT_CONFIRMATION_TEMPLATE_NAME: str = "payment_confirmation.html"
     PASSWORD_RESET_TEMPLATE_NAME: str = "password_reset_request.html"
     PASSWORD_RESET_COMPLETE_TEMPLATE_NAME: str = "password_reset_complete.html"
 
@@ -37,6 +38,15 @@ class BaseAppSettings(BaseSettings):
 
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://127.0.0.0.800")
 
+    STRIPE_SECRET_KEY: str | None = os.getenv("STRIPE_SECRET_KEY")
+    STRIPE_PUBLISHABLE_KEY: str | None = os.getenv("STRIPE_PUBLISHABLE_KEY")
+    STRIPE_WEBHOOK_SECRET: str | None = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+    STRIPE_CURRENCY: str | None = os.getenv("STRIPE_CURRENCY", "usd")
+    STRIPE_SUCCESS_URL: str | None = os.getenv("STRIPE_SUCCESS_URL", "http://localhost:3000/payment-success")
+    STRIPE_CANCEL_URL: str | None = os.getenv("STRIPE_CANCEL_URL", "http://localhost:3000/payment-cancel")
+
+    MOCK_PAYMENTS: bool = os.getenv("MOCK_PAYMENTS", "True").lower() == "true"
+
     @property
     def S3_STORAGE_ENDPOINT(self) -> str:
         return f"http://{self.S3_STORAGE_HOST}:{self.S3_STORAGE_PORT}"
@@ -44,6 +54,22 @@ class BaseAppSettings(BaseSettings):
     @property
     def REDIS_URL(self) -> str:
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+
+    @property
+    def stripe_configured(self) -> bool:
+        return bool(self.STRIPE_SECRET_KEY and not self.STRIPE_SECRET_KEY.startswith("sk_test_"))
+
+    @property
+    def use_mock_payments(self) -> bool:
+        return self.MOCK_PAYMENTS or not self.stripe_configured
+
+    @property
+    def frontend_payment_success_url(self) -> str:
+        return f"{self.FRONTEND_URL}/payment/success"
+
+    @property
+    def frontend_payment_cancel_url(self) -> str:
+        return f"{self.FRONTEND_URL}/payment/cancel"
 
 
 class Settings(BaseAppSettings):
@@ -62,6 +88,10 @@ class TestingSettings(BaseAppSettings):
     SECRET_KEY_ACCESS: str = "SECRET_KEY_ACCESS"
     SECRET_KEY_REFRESH: str = "SECRET_KEY_REFRESH"
     JWT_SIGNING_ALGORITHM: str = "HS256"
+    STRIPE_SECRET_KEY: str = "sk_test_mock_key"
+    STRIPE_PUBLISHABLE_KEY: str = "pk_test_mock_key"
+    STRIPE_WEBHOOK_SECRET: str = "whsec_mock_secret"
+    MOCK_PAYMENTS: bool = True
 
     def model_post_init(self, __context: dict[str, Any] | None = None) -> None:
         object.__setattr__(self, 'PATH_TO_DB', ":memory:")

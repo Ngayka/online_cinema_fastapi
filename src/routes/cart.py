@@ -79,7 +79,7 @@ async def get_cart(
 
 
 @router.post(
-    "/cart/items",
+    "/items",
     response_model=CartItemReadSchema,
     summary="Add film to cart",
     description="Add new movie to user`s cart",
@@ -154,7 +154,7 @@ async def add_movie_to_cart(
     )
 
 
-@router.delete("/cart/items/{item_id}",
+@router.delete("/items/{item_id}",
                summary="Delete a movie from cart by id",
                description="Delete a specific movie from the cart by its unique ID.",
                status_code=status.HTTP_204_NO_CONTENT,
@@ -208,7 +208,7 @@ async def delete_movie_from_cart(
 
 
 @router.delete(
-    "/cart/items/",
+    "/items/",
     summary="Delete all movies from cart",
     description="Delete all movies from the cart by its unique ID.",
     status_code=status.HTTP_204_NO_CONTENT,

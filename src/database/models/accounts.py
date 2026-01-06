@@ -68,6 +68,7 @@ class UserModel(Base):
     group: Mapped["UserGroupModel"] = relationship("UserGroupModel", back_populates="users")
     cart: Mapped["Cart"] = relationship("Cart", back_populates="user", uselist=False)
     orders: Mapped["Order"] = relationship("Order", back_populates="user")
+    payments: Mapped[list["Payment"]] = relationship("Payment", back_populates="user")
     activation_token: Mapped[Optional["ActivationTokenModel"]] = relationship(
         "ActivationTokenModel",
         back_populates="user",

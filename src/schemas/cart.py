@@ -19,7 +19,7 @@ class CartItemReadSchema(BaseModel):
     added_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class CartReadSchema(BaseModel):
@@ -27,4 +27,4 @@ class CartReadSchema(BaseModel):
     items: list[CartItemReadSchema]
 
     class Config:
-        orm_mode = True
+        from_attributes = True

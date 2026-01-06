@@ -1,18 +1,36 @@
+import asyncio
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from starlette import status
 
-from config import get_settings, get_order_by_id_and_user
+from config import get_settings, get_order_by_id_and_user, get_accounts_email_notificator, get_payment_service
 from config.dependencies_auth import get_current_user
-from database import UserModel, get_db, Cart, CartItem, Order, OrderItem, OrderStatusEnum
+from notifications import EmailSenderInterface
+from database import (
+    UserModel,
+    get_db,
+    Cart,
+    CartItem,
+    Order,
+    OrderItem,
+    OrderStatusEnum,
+    PaymentItem,
+    Payment,
+    PaymentStatusEnum
+)
+
 from schemas import (OrderResponseSchema,
                      OrderListSchema,
                      OrderDetailSchema,
                      MessageResponseSchema,
                      PaymentRequestSchema)
+
 from config import create_order_service, get_purchased_movie_ids, check_pending_orders
+from services.payment_service import PaymentService
 from validation import is_movie_available, validate_payment_method
 
 router = APIRouter()
@@ -20,7 +38,7 @@ app_settings = get_settings()
 
 
 @router.post(
-    "/orders",
+"/",
     response_model=OrderResponseSchema,
     summary="Add movie to order",
     status_code=status.HTTP_201_CREATED,
@@ -31,7 +49,7 @@ app_settings = get_settings()
     }
 )
 async def create_order(
-        user: UserModel = Depends(get_current_user),
+        user=Depends(get_current_user),
         db: AsyncSession = Depends(get_db)
 ):
     cart = await db.execute(select(Cart).where(Cart.user_id == user.id)
@@ -55,7 +73,7 @@ async def create_order(
     ]
     if unavailable_movies:
         raise HTTPException(
-            status_code=400, detail=f"Movies not available:','join.{unavailable_movies}"
+            status_code=400, detail=f"Movies not available:{', '.join(unavailable_movies)}"
         )
     movie_ids = [item.movie_id for item in available_cart_items]
     pending_duplicate = await check_pending_orders(db, user_id=user.id, movie_ids=movie_ids)
@@ -71,7 +89,7 @@ async def create_order(
 
 
 @router.get(
-    "/orders/me",
+    "/me",
     response_model=OrderListSchema,
     summary="Return all user`s orders",
     status_code=status.HTTP_200_OK,
@@ -80,20 +98,21 @@ async def create_order(
         404: {"description": "Orders not found"}
     }
 )
-async def return_all_orders(user: UserModel = Depends(get_current_user),
+async def return_all_orders(user=Depends(get_current_user),
                             db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Order)
                               .where(Order.user_id == user.id)
+                              .options(selectinload(Order.order_items))
                               )
     orders = result.scalars().all()
     if not orders:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Orders not found")
-    return orders
+    return {"orders": orders}
 
 
 @router.get(
-    "/orders/{order_id}",
+    "/{order_id}",
     response_model=OrderDetailSchema,
     summary="Return order detail",
     status_code=status.HTTP_200_OK,
@@ -104,11 +123,10 @@ async def return_all_orders(user: UserModel = Depends(get_current_user),
 )
 async def return_order_by_id(
         order_id: int,
-        user: UserModel = Depends(get_current_user),
+        user=Depends(get_current_user),
         db: AsyncSession = Depends(get_db),
 ):
-    result = await get_order_by_id_and_user(order_id, db, user)
-    order = result.scalar_one_or_none()
+    order = await get_order_by_id_and_user(order_id, db, user)
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Order not found")
@@ -116,7 +134,7 @@ async def return_order_by_id(
 
 
 @router.post(
-    "/orders/{order_id}/cancel",
+    "/{order_id}/cancel",
     response_model=MessageResponseSchema,
     summary="Cancel order by id",
     description="Cancel order by id, if order status is pending",
@@ -125,6 +143,13 @@ async def return_order_by_id(
 async def cancel_order(order_id: int,
                        db: AsyncSession = Depends(get_db),
                        user: UserModel = Depends(get_current_user)) -> MessageResponseSchema:
+    """
+    Description
+    Cancels an order by its ID.
+    Only orders with status PENDING can be cancelled.
+    The order must belong to the authenticated user.
+    """
+
     result = await get_order_by_id_and_user(order_id, db, user)
     order = result.scalar_one_or_none()
     if not order:
@@ -136,6 +161,7 @@ async def cancel_order(order_id: int,
                                    f"Only pending orders can be cancelled")
     order.status = OrderStatusEnum.CANCELED
     await db.commit()
+    await db.refresh(order)
 
     return MessageResponseSchema(
         message=f"Order {order_id} have been successfully cancelled"
@@ -143,7 +169,7 @@ async def cancel_order(order_id: int,
 
 
 @router.post(
-    "orders/{order_id}/pay",
+    "/{order_id}/pay",
     response_model=OrderResponseSchema,
     summary="Process order payment",
     description="Process payment for an order and update its status to PAID",
@@ -158,8 +184,10 @@ async def cancel_order(order_id: int,
 async def pay_order(order_id: int,
                     payment_data: PaymentRequestSchema,
                     db: AsyncSession = Depends(get_db),
-                    user: UserModel = Depends(get_current_user),
-                    ):
+                    user=Depends(get_current_user),
+                    payment_service: PaymentService = Depends(get_payment_service),
+                    email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator)
+):
     """
         Process payment for an order
 
@@ -170,9 +198,9 @@ async def pay_order(order_id: int,
         4. Process payment through payment gateway
         5. Update order status to PAID
         6. Send confirmation email
-        """
-    result = await get_order_by_id_and_user(order_id, db, user)
-    order = result.scalar_one_or_none()
+            """
+
+    order = await get_order_by_id_and_user(order_id, db, user)
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -184,7 +212,57 @@ async def pay_order(order_id: int,
             detail=f"You can`t pay order with status: {order.status}. "
                    f"Only pending orders can be paid")
 
-    await validate_payment_method(payment_data)
+    validate_payment_method(payment_data, user, order)
 
     try:
+        payment_result = await payment_service.process_payment(
+            order=order,
+            payment_data=payment_data,
+            user=user
+        )
+        if not payment_result["success"]:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail={
+                    "message": payment_result["message"],
+                    "error": payment_result.get("error"),
+                    "suggestion": payment_result.get("suggestion")
+                }
+            )
+        order.status = OrderStatusEnum.PAID
+        payment = Payment(
+            user_id=user.id,
+            order_id=order.id,
+            amount=order.total_amount,
+            status=PaymentStatusEnum.SUCCESSFUL,
+            external_payment_id=payment_result["transaction_id"]
+        )
+        db.add(payment)
+        await db.flush()
 
+        for order_item in order.order_items:
+            payment_item = PaymentItem(
+                payment_id=payment.id,
+                order_item_id=order_item.id,
+                price_at_payment=order_item.price_at_order
+            )
+            db.add(payment_item)
+        await db.commit()
+        await asyncio.create_task(
+            email_sender.send_payment_confirmation_email(
+                email=user.email,
+                order_id=order.id,
+                amount=Decimal(str(order.total_amount)),
+                transaction_id=payment_result["transaction_id"]
+            )
+        )
+        await db.refresh(order)
+        return OrderResponseSchema.from_orm(order)
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Payment processing error: {str(e)}"
+        )

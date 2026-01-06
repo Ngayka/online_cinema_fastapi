@@ -15,6 +15,7 @@ from database import (
 from database.models.movies import MovieStatusEnum
 from database.populate import CSVDatabaseSeeder
 from main import app
+from schemas import PaymentRequestSchema
 from security.interfaces import JWTAuthManagerInterface
 from security.token_manager import JWTAuthManager
 from storages import S3StorageClient
@@ -76,7 +77,7 @@ async def email_sender_stub():
     """
     Provide a stub implementation of the email sender.
 
-    This fixture returns an instance of StubEmailSender for testing purposes.
+    This fixture returns an instance of EmailSender for testing purposes.
     """
     return StubEmailSender()
 
@@ -263,10 +264,9 @@ async def test_movie2(db_session, test_country):
 
 @pytest_asyncio.fixture
 async def test_user(db_session):
-    user = UserModel(
+    user = UserModel.create(
         email="test@example.com",
-        _hashed_password="hashed",
-        is_active=True,
+        raw_password="Hard_test123!",
         group_id=1
     )
     db_session.add(user)
@@ -282,3 +282,16 @@ async def test_cart(db_session, test_user):
     db_session.add(cart)
     await db_session.commit()
     return cart
+
+
+@pytest_asyncio.fixture
+async def auth_headers(test_user, jwt_manager):
+    token = jwt_manager.create_access_token(
+        {"sub": test_user.email, "id": test_user.id}
+    )
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest_asyncio.fixture()
+def payment_data():
+    return PaymentRequestSchema(payment_method_id="pm_mock")
