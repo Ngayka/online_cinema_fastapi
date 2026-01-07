@@ -38,7 +38,10 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['order_id'], ['orders.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.add_column('movies', sa.Column('current_price', sa.DECIMAL(precision=10, scale=2), nullable=False))
+    op.add_column('movies', sa.Column('current_price',
+                                      sa.DECIMAL(precision=10, scale=2),
+                                      nullable=False,
+                                      server_default="0.00"))
     # ### end Alembic commands ###
 
 

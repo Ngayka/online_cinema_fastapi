@@ -16,6 +16,7 @@ from database import (
     Cart,
     CartItem,
     Order,
+    OrderItem,
     OrderStatusEnum,
     PaymentItem,
     Payment,

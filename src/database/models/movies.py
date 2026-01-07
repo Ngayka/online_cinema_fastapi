@@ -8,7 +8,6 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 from database.models.base import Base
-from database.models.cart import CartItem
 
 
 class MovieStatusEnum(str, Enum):
