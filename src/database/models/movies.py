@@ -1,12 +1,14 @@
 import datetime
+from decimal import Decimal
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import String, Float, Text, DECIMAL, UniqueConstraint, Date, ForeignKey, Table, Column
+from sqlalchemy import String, Float, Text, DECIMAL, UniqueConstraint, Date, ForeignKey, Table, Column, Boolean
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import Enum as SQLAlchemyEnum
 
-from database import Base
+from database.models.base import Base
+from database.models.cart import CartItem
 
 
 class MovieStatusEnum(str, Enum):
@@ -114,14 +116,19 @@ class MovieModel(Base):
     date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
     score: Mapped[float] = mapped_column(Float, nullable=False)
     overview: Mapped[str] = mapped_column(Text, nullable=False)
+    current_price: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     status: Mapped[MovieStatusEnum] = mapped_column(
         SQLAlchemyEnum(MovieStatusEnum), nullable=False
     )
     budget: Mapped[float] = mapped_column(DECIMAL(15, 2), nullable=False)
     revenue: Mapped[float] = mapped_column(Float, nullable=False)
 
+    cart_items: Mapped[list["CartItem"]] = relationship("CartItem", back_populates="movie")
+
     country_id: Mapped[int] = mapped_column(ForeignKey("countries.id"), nullable=False)
     country: Mapped["CountryModel"] = relationship("CountryModel", back_populates="movies")
+    order_items: Mapped[list["OrderItem"]] = relationship(back_populates="movie")
 
     genres: Mapped[list["GenreModel"]] = relationship(
         "GenreModel",
