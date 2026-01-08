@@ -11,7 +11,8 @@ from database import Cart, UserModel, Order, OrderItem, OrderStatusEnum
 async def create_order_service(db: AsyncSession, cart: Cart, user: UserModel) -> Order:
     total_amount = Decimal("0")
     for cart_item in cart.items:
-        total_amount += cart_item.movie.current_price
+        price = cart_item.movie.current_price or Decimal("0")
+        total_amount += price
 
     order = Order(
         user_id=user.id,
@@ -43,7 +44,7 @@ async def create_order_service(db: AsyncSession, cart: Cart, user: UserModel) ->
 
 
 async def check_pending_orders(db: AsyncSession, user_id: int, movie_ids: list[int]) -> bool:
-    result = db.execute(select(OrderItem)
+    result = await db.execute(select(OrderItem)
                         .join(Order)
                         .where(
                             Order.user_id == user_id,
@@ -51,17 +52,17 @@ async def check_pending_orders(db: AsyncSession, user_id: int, movie_ids: list[i
                             OrderItem.movie_id.in_(movie_ids)
         )
     )
-    return result.scalars().one() or None
+    return result.scalars().first() is not None
 
 
 async def get_purchased_movie_ids(db: AsyncSession, user_id: int) -> set[int]:
-    result = db.execute(select(OrderItem.movie_id).join(Order).where(Order.user_id == user_id,
+    result = await db.execute(select(OrderItem.movie_id).join(Order).where(Order.user_id == user_id,
                                                                      Order.status == OrderStatusEnum.PAID))
 
-    return {row[0] for row in result.all()}
+    return set(result.scalars().all())
 
 
-async def get_order_by_id_and_user(order_id: int, db: AsyncSession, user: UserModel):
+async def get_order_by_id_and_user(order_id: int, db: AsyncSession, user: UserModel) -> Order | None:
     result = await db.execute(select(Order)
     .where(
         Order.user_id == user.id,
@@ -72,4 +73,4 @@ async def get_order_by_id_and_user(order_id: int, db: AsyncSession, user: UserMo
         .selectinload(OrderItem.movie)
     )
     )
-    return result or None
+    return result.scalars().first()

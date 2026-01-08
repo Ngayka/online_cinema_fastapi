@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from sqlalchemy import Integer, ForeignKey, DateTime, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -12,7 +13,10 @@ class Cart(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     user: Mapped["UserModel"] = relationship("UserModel", back_populates="cart")
-    items: Mapped["CartItem"] = relationship("CartItem", back_populates="cart", cascade="all, delete")
+    items: Mapped[List["CartItem"]] = relationship(
+        "CartItem",
+        back_populates="cart",
+        cascade="all, delete-orphan")
 
 
 class CartItem(Base):

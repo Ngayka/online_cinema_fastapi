@@ -10,7 +10,6 @@ from security.token_manager import JWTAuthManager
 from storages import S3StorageInterface, S3StorageClient
 
 
-
 def get_settings() -> BaseAppSettings:
     """
     Retrieve the application settings based on the current environment.
@@ -52,7 +51,7 @@ def get_jwt_auth_manager(settings: BaseAppSettings = Depends(get_settings)) -> J
 
 
 def get_accounts_email_notificator(
-    settings: BaseAppSettings = Depends(get_settings)
+        settings: BaseAppSettings = Depends(get_settings)
 ) -> EmailSenderInterface:
     """
     Retrieve an instance of the EmailSenderInterface configured with the application settings.
@@ -78,12 +77,14 @@ def get_accounts_email_notificator(
         activation_email_template_name=settings.ACTIVATION_EMAIL_TEMPLATE_NAME,
         activation_complete_email_template_name=settings.ACTIVATION_COMPLETE_EMAIL_TEMPLATE_NAME,
         password_email_template_name=settings.PASSWORD_RESET_TEMPLATE_NAME,
-        password_complete_email_template_name=settings.PASSWORD_RESET_COMPLETE_TEMPLATE_NAME
+        password_complete_email_template_name=settings.PASSWORD_RESET_COMPLETE_TEMPLATE_NAME,
+        payment_confirmation_template_name=settings.PAYMENT_CONFIRMATION_TEMPLATE_NAME
+
     )
 
 
 def get_s3_storage_client(
-    settings: BaseAppSettings = Depends(get_settings)
+        settings: BaseAppSettings = Depends(get_settings)
 ) -> S3StorageInterface:
     """
     Retrieve an instance of the S3StorageInterface configured with the application settings.
@@ -107,3 +108,13 @@ def get_s3_storage_client(
     )
 
 
+def get_payment_service(
+    settings: Settings = Depends(get_settings),
+) -> "PaymentService":
+    """
+    Dependency factory for PaymentService
+    """
+    from services.payment_service import PaymentService
+    return PaymentService(
+        settings=settings,
+    )
