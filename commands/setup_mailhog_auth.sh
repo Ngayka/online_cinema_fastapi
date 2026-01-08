@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Check if MailHog user and password are set
 if [ -n "$MAILHOG_USER" ] && [ -n "$MAILHOG_PASSWORD" ]; then
