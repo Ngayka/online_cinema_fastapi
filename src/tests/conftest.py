@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy import insert
@@ -8,8 +10,9 @@ from database import (
     reset_database,
     get_db_contextmanager,
     UserGroupEnum,
-    UserGroupModel
+    UserGroupModel, CountryModel, MovieModel, UserModel, Cart
 )
+from database.models.movies import MovieStatusEnum
 from database.populate import CSVDatabaseSeeder
 from main import app
 from security.interfaces import JWTAuthManagerInterface
@@ -209,3 +212,73 @@ async def seed_database(db_session):
         await seeder.seed()
 
     yield db_session
+
+
+@pytest_asyncio.fixture
+async def test_country(db_session):
+    test_country = CountryModel(code="US", name="United States")
+    db_session.add(test_country)
+    await db_session.commit()
+    await db_session.refresh(test_country)
+    return test_country
+
+
+@pytest_asyncio.fixture
+async def test_movie(db_session, test_country):
+    test_movie = MovieModel(
+        name="Test Movie",
+        date=date(2024, 1, 1),
+        score=8.5,
+        overview="Test overview",
+        status=MovieStatusEnum.RELEASED,
+        budget=1_000_000,
+        revenue=5_000_000,
+        country_id=test_country.id
+    )
+
+    db_session.add(test_movie)
+    await db_session.commit()
+    await db_session.refresh(test_movie)
+    return test_movie
+
+
+@pytest_asyncio.fixture
+async def test_movie2(db_session, test_country):
+    test_movie2 = MovieModel(
+        name="Test Movie2",
+        date=date(2024, 1, 1),
+        score=8.5,
+        overview="Test overview",
+        status=MovieStatusEnum.RELEASED,
+        budget=1_000_000,
+        revenue=5_000_000,
+        country_id=test_country.id
+    )
+
+    db_session.add(test_movie2)
+    await db_session.commit()
+    await db_session.refresh(test_movie2)
+    return test_movie2
+
+
+@pytest_asyncio.fixture
+async def test_user(db_session):
+    user = UserModel(
+        email="test@example.com",
+        _hashed_password="hashed",
+        is_active=True,
+        group_id=1
+    )
+    db_session.add(user)
+    await db_session.commit()
+    return user
+
+
+@pytest_asyncio.fixture
+async def test_cart(db_session, test_user):
+    cart = Cart(
+        user_id=test_user.id
+    )
+    db_session.add(cart)
+    await db_session.commit()
+    return cart
