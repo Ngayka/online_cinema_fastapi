@@ -41,6 +41,10 @@ class BaseAppSettings(BaseSettings):
     def S3_STORAGE_ENDPOINT(self) -> str:
         return f"http://{self.S3_STORAGE_HOST}:{self.S3_STORAGE_PORT}"
 
+    @property
+    def REDIS_URL(self) -> str:
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+
 
 class Settings(BaseAppSettings):
     POSTGRES_USER: str = os.getenv("POSTGRES_USER", "test_user")
