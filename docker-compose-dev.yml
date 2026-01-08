@@ -1,6 +1,6 @@
 services:
   db:
-    image: 'postgres:16'
+    image: 'postgres:latest'
     container_name: postgres_theater
     env_file:
       - .env
@@ -78,7 +78,7 @@ services:
       context: .
       dockerfile: ./docker/mailhog/Dockerfile
     container_name: mailhog_theater
-    command: ["/bin/sh", "-c", "/commands/setup_mailhog_auth.sh && MailHog"]
+    command: ["/bin/sh", "-c", "/commands/setup_mailhog_auth.sh && ~/go/bin/MailHog"]
     ports:
       - "8025:8025"
       - "1025:1025"
@@ -127,46 +127,9 @@ services:
     container_name: cinema-redis
     command: redis-server --appendonly yes
     volumes:
-      - redis_data:/data
+      - redis-data:/data
     expose:
       - "6379"
-    networks:
-      - theater_network
-
-  celery_worker:
-    build: .
-    container_name: celery_worker_theater
-    command: celery -A config.celery_app worker -l info
-    env_file:
-      - .env
-    environment:
-      - PYTHONPATH=/usr/src/fastapi
-    depends_on:
-      redis:
-        condition: service_started
-      db:
-        condition: service_healthy
-    volumes:
-      - ./src:/usr/src/fastapi
-    networks:
-      - theater_network
-
-  celery_beat:
-    build: .
-    container_name: celery_beat_theater
-    command: celery -A config.celery_app beat -l info
-    env_file:
-      - .env
-    environment:
-      - PYTHONPATH=/usr/src/fastapi
-    depends_on:
-      redis:
-        condition: service_started
-      db:
-        condition: service_healthy
-    volumes:
-      - ./src:/usr/src/fastapi
-    working_dir: /usr/src/fastapi
     networks:
       - theater_network
 
@@ -177,7 +140,7 @@ volumes:
     driver: local
   minio_data:
     driver: local
-  redis_data:
+  redis-data:
     driver: local
 
 networks:
