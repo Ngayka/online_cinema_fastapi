@@ -193,7 +193,7 @@ async def delete_movie_from_cart(
         )
 
     result = await db.execute(
-        select(CartItem).where(CartItem.id == item_id, CartItem.cart_id == user.cart.id)
+        select(CartItem).where(CartItem.id == item_id, CartItem.cart_id == cart.id)
     )
     cart_item = result.scalar_one_or_none()
     if not cart_item:
@@ -234,14 +234,13 @@ async def delete_all_movies(
     Raises:
         HTTPException: If the cart contains no items (404).
     """
-    stmt = select(Cart).where(Cart.user_id == user.id)
+    stmt = select(Cart.id).where(Cart.user_id == user.id)
     result = await db.execute(stmt)
-    items = result.scalars().all()
-    if not items:
+    cart_id = result.scalar()
+    if not cart_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No movies in the cart"
         )
-    for item in items:
-        await db.delete(item)
+    await db.execute(delete(CartItem).where(CartItem.cart_id == cart_id))
     await db.commit()
     return None
