@@ -71,6 +71,9 @@ Understanding the project's directory structure is crucial for navigating and ma
 └── src
     ├── config
     │   ├── __init__.py
+    │   ├── celery-app.py
+    │   ├── depemdencies_auth.py
+    │   ├── order_config.py
     │   ├── dependencies.py
     │   └── settings.py
     ├── database
@@ -117,6 +120,9 @@ Understanding the project's directory structure is crucial for navigating and ma
     ├── routes
     │   ├── __init__.py
     │   ├── accounts.py
+    │   ├── cart.py
+    │   └── orders.py
+    │   ├── payments.py
     │   ├── movies.py
     │   └── profiles.py
     ├── schemas
@@ -127,6 +133,9 @@ Understanding the project's directory structure is crucial for navigating and ma
     │   │   └── movies.py
     │   ├── movies.py
     │   └── profiles.py
+    │   ├── cart.py
+    │   └── payments.py
+    │   └── orders.py
     ├── security
     │   ├── __init__.py
     │   ├── http.py
@@ -134,10 +143,17 @@ Understanding the project's directory structure is crucial for navigating and ma
     │   ├── passwords.py
     │   ├── token_manager.py
     │   └── utils.py
+    ├── services
+    │   ├── __init__.py
+    │   ├── payment_service.py
     ├── storages
     │   ├── __init__.py
     │   ├── interfaces.py
     │   └── s3.py
+    ├── tasks
+    │   ├── __init__.py
+    │   ├── cleanup_tasks.py
+    │   └── email_tasks.py
     ├── tests
     │   ├── __init__.py
     │   ├── conftest.py
@@ -158,9 +174,15 @@ Understanding the project's directory structure is crucial for navigating and ma
     │       ├── test_accounts.py
     │       ├── test_movies.py
     │       └── test_profiles.py
+    │       ├── test_orders.py
+    │       ├── test_payments.py
+    │       └── test_cart.py
     └── validation
         ├── __init__.py
-        └── profile.py
+        ├── profile.py
+        ├── orders.py
+        └── payments.py
+       
 ```
 
 ### Directory and File Descriptions
